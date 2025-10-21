@@ -7,15 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 
-import { FuncionMatematica } from "@/src/entidades/FuncionMatematica"
-import { EstadoVisualizacion } from "@/src/entidades/EstadoVisualizacion"
-import { ConfiguracionCanvas } from "@/src/entidades/ConfiguracionCanvas"
-import { CalculadoraRiemann } from "@/src/servicios/CalculadoraRiemann"
-import { CalculadoraIntegralExacta } from "@/src/servicios/CalculadoraIntegralExacta"
-import { CalculadoraError } from "@/src/servicios/CalculadoraError"
-import { GestorLogros } from "@/src/servicios/GestorLogros"
-import { GestorAnimacion } from "@/src/servicios/GestorAnimacion"
-import { GestorMetricas } from "@/src/servicios/GestorMetricas"
+import { EscenarioFactory } from "@/src/escenarios/EscenarioFactory"
 import { TransformadorCoordenadas } from "@/src/servicios/TransformadorCoordenadas"
 import { RenderizadorCanvas } from "@/src/presentacion/RenderizadorCanvas"
 import { RenderizadorEjes } from "@/src/presentacion/RenderizadorEjes"
@@ -24,25 +16,14 @@ import { RenderizadorRectangulos } from "@/src/presentacion/RenderizadorRectangu
 import { RenderizadorPuntos } from "@/src/presentacion/RenderizadorPuntos"
 import { GestorInteraccion } from "@/src/interaccion/GestorInteraccion"
 import { PuntoInteractivo } from "@/src/entidades/PuntoInteractivo"
-import { AlmacenadorProgreso } from "@/src/persistencia/AlmacenadorProgreso"
-import { GestorTeoria } from "@/src/servicios/GestorTeoria"
-import { GeneradorEjemplos } from "@/src/servicios/GeneradorEjemplos"
+import { CalculadoraRiemann } from "@/src/servicios/CalculadoraRiemann"
 
 export default function JardinRiemannPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const [estado] = useState(() => new EstadoVisualizacion())
-  const [configuracion] = useState(() => new ConfiguracionCanvas(800, 500))
-  const calculadoraRiemann = useRef(new CalculadoraRiemann())
-  const calculadoraExacta = useRef(new CalculadoraIntegralExacta())
-  const calculadoraError = useRef(new CalculadoraError())
-  const gestorLogros = useRef(new GestorLogros())
-  const gestorAnimacion = useRef(new GestorAnimacion())
-  const gestorMetricas = useRef(new GestorMetricas())
-  const almacenador = useRef(new AlmacenadorProgreso())
-  const gestorInteraccion = useRef<GestorInteraccion | null>(null)
-  const gestorTeoria = useRef(new GestorTeoria())
-  const generadorEjemplos = useRef(new GeneradorEjemplos())
+  // Factory para manejar escenarios
+  const escenarioFactory = useRef(new EscenarioFactory())
+  const escenario = useRef(escenarioFactory.current.crearEscenario('jardin-riemann'))
 
   // Estado React para UI
   const [funcionActual, setFuncionActual] = useState("parabola")
@@ -50,113 +31,90 @@ export default function JardinRiemannPage() {
   const [integralExacta, setIntegralExacta] = useState(0)
   const [errorAbsoluto, setErrorAbsoluto] = useState(0)
   const [precision, setPrecision] = useState(0)
-  const [logros, setLogros] = useState(gestorLogros.current.obtenerLogros())
-  const [metricas, setMetricas] = useState(gestorMetricas.current.obtenerResumen())
+  const [logros, setLogros] = useState<any[]>([])
+  const [metricas, setMetricas] = useState<any>({})
   const [, setForceUpdate] = useState(0)
 
-  // Funciones disponibles
-  const funciones = {
-    parabola: new FuncionMatematica("cuadratica", { a: 0.5, b: 0, c: 1 }),
-    seno: new FuncionMatematica("seno", { a: 2, b: 1, c: 0, d: 3 }),
-    cubica: new FuncionMatematica("cubica", { a: 0.1, b: 0.5, c: 0, d: 2 }),
-  }
+  // Referencias para renderizado
+  const gestorInteraccion = useRef<GestorInteraccion | null>(null)
+  const calculadoraRiemann = useRef(new CalculadoraRiemann())
 
+  // Inicializar escenario
   useEffect(() => {
     if (!canvasRef.current) return
 
-    // Inicializar función
-    estado.funcion = funciones[funcionActual as keyof typeof funciones]
+    // Cambiar función en el escenario si es necesario
+    if (escenario.current && escenario.current.funcionActual !== funcionActual) {
+      escenario.current.cambiarFuncion(funcionActual)
+    }
 
     // Configurar interacción
-    const intervaloX = estado.obtenerIntervalo()
+    if (!escenario.current || !escenario.current.estado) return
+    
+    const intervaloX = escenario.current.estado.obtenerIntervalo()
     const intervaloY = { min: -1, max: 10 }
-    const transformador = new TransformadorCoordenadas(configuracion, intervaloX, intervaloY)
+    const transformador = new TransformadorCoordenadas(escenario.current.configuracion, intervaloX, intervaloY)
 
     gestorInteraccion.current = new GestorInteraccion(canvasRef.current, transformador)
     // Type assertion to bypass callback type restrictions
     const callbacks = gestorInteraccion.current.callbacks as any
     callbacks.onLimiteIzquierdoCambiado = (x: number) => {
-      estado.actualizarLimites(x, estado.limiteDerecho)
-      calcularYRenderizar()
+      if (escenario.current && escenario.current.estado) {
+        escenario.current.actualizarLimites(x, escenario.current.estado.limiteDerecho)
+        actualizarUI()
+      }
     }
     callbacks.onLimiteDerechoCambiado = (x: number) => {
-      estado.actualizarLimites(estado.limiteIzquierdo, x)
-      calcularYRenderizar()
+      if (escenario.current && escenario.current.estado) {
+        escenario.current.actualizarLimites(escenario.current.estado.limiteIzquierdo, x)
+        actualizarUI()
+      }
     }
 
     // Agregar puntos interactivos
-    const puntoIzq = transformador.matematicasACanvas(estado.limiteIzquierdo, 0)
-    const puntoDer = transformador.matematicasACanvas(estado.limiteDerecho, 0)
+    const puntoIzq = transformador.matematicasACanvas(escenario.current.estado.limiteIzquierdo, 0)
+    const puntoDer = transformador.matematicasACanvas(escenario.current.estado.limiteDerecho, 0)
     gestorInteraccion.current.agregarPunto(new PuntoInteractivo(puntoIzq.x, puntoIzq.y, "limite-izquierdo"))
     gestorInteraccion.current.agregarPunto(new PuntoInteractivo(puntoDer.x, puntoDer.y, "limite-derecho"))
 
-    calcularYRenderizar()
+    actualizarUI()
   }, [funcionActual])
 
-  const calcularYRenderizar = () => {
-    if (!canvasRef.current || !estado.funcion) return
-
-    const intervalo = estado.obtenerIntervalo()
-    const tipoAproximacion =
-      estado.tipoHechizo === "izquierdo" ? "izquierda" : estado.tipoHechizo === "derecho" ? "derecha" : "punto-medio"
-
-    // Calcular valores usando las clases de servicio
-    const aprox = calculadoraRiemann.current.calcularSumaRiemann(
-      estado.funcion,
-      intervalo,
-      estado.numeroMacetas,
-      tipoAproximacion,
-    )
-    const exacta = calculadoraExacta.current.calcular(estado.funcion, intervalo)
-    const error = calculadoraError.current.calcularErrorAbsoluto(aprox, exacta)
-    const prec = calculadoraError.current.calcularPrecision(aprox, exacta)
-
-    setAproximacionRiemann(aprox)
-    setIntegralExacta(exacta)
-    setErrorAbsoluto(error)
-    setPrecision(prec)
-
-    // Actualizar métricas
-    gestorMetricas.current.registrarIntento()
-    gestorMetricas.current.calcularPrecision(aprox, exacta)
-    setMetricas(gestorMetricas.current.obtenerResumen())
-
-    // Verificar logros
-    const datosLogros = {
-      errorAbsoluto: error,
-      tiempo: gestorMetricas.current.obtenerResumen().tiempo,
-      macetas: estado.numeroMacetas,
-    }
-    const nuevosLogros = gestorLogros.current.verificarLogros(datosLogros)
-    if (nuevosLogros.length > 0) {
-      setLogros([...gestorLogros.current.obtenerLogros()])
-    }
-
-    // Renderizar
+  const actualizarUI = () => {
+    if (!escenario.current) return
+    
+    const datos = escenario.current.obtenerDatos()
+    setAproximacionRiemann(datos.resultados.aproximacionRiemann)
+    setIntegralExacta(datos.resultados.integralExacta)
+    setErrorAbsoluto(datos.resultados.errorAbsoluto)
+    setPrecision(datos.resultados.precision)
+    setLogros(datos.logros)
+    setMetricas(datos.metricas)
     renderizar()
   }
 
   const renderizar = () => {
-    if (!canvasRef.current || !estado.funcion) return
+    if (!canvasRef.current || !escenario.current || !escenario.current.estado || !escenario.current.estado.funcion) return
 
-    const intervalo = estado.obtenerIntervalo()
+    const intervalo = escenario.current.estado.obtenerIntervalo()
     const intervaloY = { min: -1, max: 10 }
-    const transformador = new TransformadorCoordenadas(configuracion, intervalo, intervaloY)
+    const transformador = new TransformadorCoordenadas(escenario.current.configuracion, intervalo, intervaloY)
 
     // Crear renderizadores
-    const renderizadorCanvas = new RenderizadorCanvas(canvasRef.current, configuracion)
-    const renderizadorEjes = new RenderizadorEjes(configuracion, transformador)
-    const renderizadorFuncion = new RenderizadorFuncion(estado.funcion, transformador, configuracion)
+    const renderizadorCanvas = new RenderizadorCanvas(canvasRef.current, escenario.current.configuracion)
+    const renderizadorEjes = new RenderizadorEjes(escenario.current.configuracion, transformador)
+    const renderizadorFuncion = new RenderizadorFuncion(escenario.current.estado.funcion, transformador, escenario.current.configuracion)
 
     const tipoAproximacion =
-      estado.tipoHechizo === "izquierdo" ? "izquierda" : estado.tipoHechizo === "derecho" ? "derecha" : "punto-medio"
+      escenario.current.estado.tipoHechizo === "izquierdo" ? "izquierda" : 
+      escenario.current.estado.tipoHechizo === "derecho" ? "derecha" : "punto-medio"
     const rectangulos = calculadoraRiemann.current.generarRectangulos(
-      estado.funcion,
+      escenario.current.estado.funcion,
       intervalo,
-      estado.numeroMacetas,
+      escenario.current.estado.numeroMacetas,
       tipoAproximacion,
     )
-    const renderizadorRectangulos = new RenderizadorRectangulos(rectangulos, transformador, configuracion)
+    const renderizadorRectangulos = new RenderizadorRectangulos(rectangulos, transformador, escenario.current.configuracion)
 
     const puntos = gestorInteraccion.current?.obtenerPuntos() || []
     const renderizadorPuntos = new RenderizadorPuntos(puntos, transformador)
@@ -166,27 +124,16 @@ export default function JardinRiemannPage() {
   }
 
   const toggleAnimacion = () => {
-    if (gestorAnimacion.current.estaActiva()) {
-      gestorAnimacion.current.detener()
-      estado.toggleAnimacion()
-    } else {
-      gestorAnimacion.current.iniciar(estado.numeroMacetas, 50, (macetas: number) => {
-        estado.actualizarMacetas(macetas)
-        calcularYRenderizar()
-        setForceUpdate((n) => n + 1)
-      })
-      estado.toggleAnimacion()
-    }
+    escenario.current.toggleAnimacion()
+    actualizarUI()
     setForceUpdate((n) => n + 1)
   }
 
   const reiniciar = () => {
-    estado.reiniciar()
-    gestorMetricas.current.reiniciar()
-    gestorLogros.current.reiniciar()
-    setLogros([...gestorLogros.current.obtenerLogros()])
-    setMetricas(gestorMetricas.current.obtenerResumen())
-    calcularYRenderizar()
+    if (escenario.current) {
+      escenario.current.reiniciar()
+      actualizarUI()
+    }
   }
 
   const nombresFunciones = {
@@ -260,7 +207,7 @@ export default function JardinRiemannPage() {
                     <div className="pt-3 border-t border-green-100">
                       <div className="text-sm text-gray-600 mb-1">Integral Definida:</div>
                       <div className="text-lg font-mono text-blue-600">
-                        integral[{estado.limiteIzquierdo.toFixed(1)}, {estado.limiteDerecho.toFixed(1)}] f(x)dx
+                        integral[{escenario.current?.estado?.limiteIzquierdo?.toFixed(1) || '0.0'}, {escenario.current?.estado?.limiteDerecho?.toFixed(1) || '0.0'}] f(x)dx
                       </div>
                     </div>
                   </div>
@@ -290,7 +237,7 @@ export default function JardinRiemannPage() {
                   <Card className="p-4 bg-blue-50 border-2 border-blue-200">
                     <div className="text-sm text-blue-600 mb-1">Aproximación de Riemann</div>
                     <div className="text-3xl font-bold text-blue-700">{aproximacionRiemann.toFixed(4)}</div>
-                    <div className="text-xs text-blue-500 mt-1">Σf(xi) con {estado.numeroMacetas} macetas</div>
+                    <div className="text-xs text-blue-500 mt-1">Σf(xi) con {escenario.current?.estado?.numeroMacetas || 0} macetas</div>
                   </Card>
                   <Card className="p-4 bg-green-50 border-2 border-green-200">
                     <div className="text-sm text-green-600 mb-1">Integral Exacta</div>
@@ -385,9 +332,10 @@ export default function JardinRiemannPage() {
                   <h4 className="font-bold text-gray-800 mb-3">Modo de Aprendizaje</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
-                      variant={estado.modoAprendizaje === "guiado" ? "default" : "outline"}
+                      variant={escenario.current?.estado?.modoAprendizaje === "guiado" ? "default" : "outline"}
                       onClick={() => {
-                        estado.cambiarModoAprendizaje("guiado")
+                        escenario.current.cambiarModoAprendizaje("guiado")
+                        actualizarUI()
                         setForceUpdate((n) => n + 1)
                       }}
                       className="gap-2"
@@ -395,9 +343,10 @@ export default function JardinRiemannPage() {
                       📚 Guiado
                     </Button>
                     <Button
-                      variant={estado.modoAprendizaje === "libre" ? "default" : "outline"}
+                      variant={escenario.current?.estado?.modoAprendizaje === "libre" ? "default" : "outline"}
                       onClick={() => {
-                        estado.cambiarModoAprendizaje("libre")
+                        escenario.current.cambiarModoAprendizaje("libre")
+                        actualizarUI()
                         setForceUpdate((n) => n + 1)
                       }}
                       className="gap-2 bg-green-600 hover:bg-green-700"
@@ -415,7 +364,11 @@ export default function JardinRiemannPage() {
                       <Button
                         key={key}
                         variant={funcionActual === key ? "default" : "outline"}
-                        onClick={() => setFuncionActual(key)}
+                        onClick={() => {
+                          setFuncionActual(key)
+                          escenario.current.cambiarFuncion(key)
+                          actualizarUI()
+                        }}
                         className={`w-full justify-start gap-2 ${funcionActual === key ? "bg-green-600" : ""}`}
                       >
                         <span>{key === "parabola" ? "🌱" : key === "seno" ? "🌊" : "🌿"}</span>
@@ -429,14 +382,16 @@ export default function JardinRiemannPage() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="font-bold text-gray-800">Número de Macetas</h4>
-                    <span className="text-2xl font-bold text-green-600">{estado.numeroMacetas}</span>
+                    <span className="text-2xl font-bold text-green-600">{escenario.current?.estado?.numeroMacetas || 0}</span>
                   </div>
                   <Slider
-                    value={[estado.numeroMacetas]}
+                    value={[escenario.current?.estado?.numeroMacetas || 0]}
                     onValueChange={([value]) => {
-                      estado.actualizarMacetas(value)
-                      calcularYRenderizar()
+                      if (escenario.current) {
+                        escenario.current.actualizarMacetas(value)
+                        actualizarUI()
                       setForceUpdate((n) => n + 1)
+                      }
                     }}
                     min={1}
                     max={50}
@@ -452,24 +407,26 @@ export default function JardinRiemannPage() {
                 <div>
                   <h4 className="font-bold text-gray-800 mb-3">Animación</h4>
                   <Button onClick={toggleAnimacion} className="w-full gap-2 bg-green-600 hover:bg-green-700">
-                    {gestorAnimacion.current.estaActiva() ? (
+                    {escenario.current.gestorAnimacion.estaActiva() ? (
                       <Pause className="w-4 h-4" />
                     ) : (
                       <Play className="w-4 h-4" />
                     )}
-                    {gestorAnimacion.current.estaActiva() ? "Pausar" : "Play"}
+                    {escenario.current.gestorAnimacion.estaActiva() ? "Pausar" : "Play"}
                   </Button>
                   <div className="mt-3">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Velocidad</span>
-                      <span className="text-gray-800">{estado.velocidadAnimacion.toFixed(1)}x</span>
+                      <span className="text-gray-800">{escenario.current?.estado?.velocidadAnimacion?.toFixed(1) || '1.0'}x</span>
                     </div>
                     <Slider
-                      value={[estado.velocidadAnimacion]}
+                      value={[escenario.current?.estado?.velocidadAnimacion || 1.0]}
                       onValueChange={([value]) => {
-                        estado.actualizarVelocidad(value)
-                        gestorAnimacion.current.cambiarVelocidad(value)
+                        if (escenario.current) {
+                          escenario.current.actualizarVelocidadAnimacion(value)
+                          actualizarUI()
                         setForceUpdate((n) => n + 1)
+                        }
                       }}
                       min={0.1}
                       max={5}
@@ -485,14 +442,16 @@ export default function JardinRiemannPage() {
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-600">Límite Izquierdo</span>
-                        <span className="text-gray-800">{estado.limiteIzquierdo.toFixed(1)}</span>
+                        <span className="text-gray-800">{escenario.current?.estado?.limiteIzquierdo?.toFixed(1) || '0.0'}</span>
                       </div>
                       <Slider
-                        value={[estado.limiteIzquierdo]}
+                        value={[escenario.current?.estado?.limiteIzquierdo || 0]}
                         onValueChange={([value]) => {
-                          estado.actualizarLimites(value, estado.limiteDerecho)
-                          calcularYRenderizar()
+                          if (escenario.current && escenario.current.estado) {
+                            escenario.current.actualizarLimites(value, escenario.current.estado.limiteDerecho)
+                            actualizarUI()
                           setForceUpdate((n) => n + 1)
+                          }
                         }}
                         min={-10}
                         max={0}
@@ -502,14 +461,16 @@ export default function JardinRiemannPage() {
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-600">Límite Derecho</span>
-                        <span className="text-gray-800">{estado.limiteDerecho.toFixed(1)}</span>
+                        <span className="text-gray-800">{escenario.current?.estado?.limiteDerecho?.toFixed(1) || '0.0'}</span>
                       </div>
                       <Slider
-                        value={[estado.limiteDerecho]}
+                        value={[escenario.current?.estado?.limiteDerecho || 0]}
                         onValueChange={([value]) => {
-                          estado.actualizarLimites(estado.limiteIzquierdo, value)
-                          calcularYRenderizar()
-                          setForceUpdate((n) => n + 1)
+                          if (escenario.current && escenario.current.estado) {
+                            escenario.current.actualizarLimites(escenario.current.estado.limiteIzquierdo, value)
+                            actualizarUI()
+                            setForceUpdate((n) => n + 1)
+                          }
                         }}
                         min={0}
                         max={10}
@@ -526,13 +487,13 @@ export default function JardinRiemannPage() {
                     {["izquierdo", "derecho", "central"].map((tipo) => (
                       <Button
                         key={tipo}
-                        variant={estado.tipoHechizo === tipo ? "default" : "outline"}
+                        variant={escenario.current?.estado?.tipoHechizo === tipo ? "default" : "outline"}
                         onClick={() => {
-                          estado.cambiarTipoHechizo(tipo)
-                          calcularYRenderizar()
+                          escenario.current.cambiarTipoHechizo(tipo)
+                          actualizarUI()
                           setForceUpdate((n) => n + 1)
                         }}
-                        className={`text-xs ${estado.tipoHechizo === tipo ? "bg-green-600" : ""}`}
+                        className={`text-xs ${escenario.current?.estado?.tipoHechizo === tipo ? "bg-green-600" : ""}`}
                       >
                         {tipo === "izquierdo" ? "⬅️ Izq" : tipo === "derecho" ? "➡️ Der" : "⬆️ Central"}
                       </Button>
@@ -564,28 +525,28 @@ export default function JardinRiemannPage() {
               {/* Teoría de Riemann */}
               <Card className="p-6">
                 <div className="teoria-container">
-                  <h2 className="text-2xl font-bold mb-4 text-green-800">{gestorTeoria.current.obtenerTeoria('riemann')?.titulo}</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-green-800">{escenario.current.obtenerTeoria('riemann')?.titulo}</h2>
                   
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Definición</h3>
-                    <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('riemann')?.definicion}</p>
+                    <p className="text-gray-700 mb-4">{escenario.current.obtenerTeoria('riemann')?.definicion}</p>
                   </div>
 
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Fórmula</h3>
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <code className="text-lg font-mono text-blue-800">{gestorTeoria.current.obtenerTeoria('riemann')?.formula}</code>
+                      <code className="text-lg font-mono text-blue-800">{escenario.current.obtenerTeoria('riemann')?.formula}</code>
                     </div>
                   </div>
 
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Símbolos</h3>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      {Object.entries(gestorTeoria.current.obtenerTeoria('riemann')?.simbolos || {}).map(([simbolo, descripcion], index: number, array: any[]) => (
+                      {Object.entries(escenario.current.obtenerTeoria('riemann')?.simbolos || {}).map(([simbolo, descripcion], index: number, array: any[]) => (
                         <div key={simbolo} className={`flex justify-between py-1 ${index < array.length - 1 ? 'border-b border-gray-200' : ''}`}>
                           <code className="font-mono text-blue-600">{simbolo}</code>
                           <span className="text-gray-700">{descripcion as string}</span>
-                        </div>
+                      </div>
                       ))}
                     </div>
                   </div>
@@ -593,14 +554,14 @@ export default function JardinRiemannPage() {
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Tipos de Aproximación</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {Object.entries(gestorTeoria.current.obtenerTeoria('riemann')?.tiposAproximacion || {}).map(([tipo, descripcion], index: number) => {
+                      {Object.entries(escenario.current.obtenerTeoria('riemann')?.tiposAproximacion || {}).map(([tipo, descripcion], index: number) => {
                         const colors = ['green', 'blue', 'purple']
                         const color = colors[index % colors.length]
                         return (
                           <div key={tipo} className={`bg-${color}-50 p-4 rounded-lg border border-${color}-200`}>
                             <h4 className={`font-semibold text-${color}-800 mb-2 capitalize`}>{tipo}</h4>
                             <p className="text-sm text-gray-700">{descripcion as string}</p>
-                          </div>
+                      </div>
                         )
                       })}
                     </div>
@@ -609,7 +570,7 @@ export default function JardinRiemannPage() {
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Ventajas</h3>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('riemann')?.ventajas?.map((ventaja: string, index: number) => (
+                      {escenario.current.obtenerTeoria('riemann')?.ventajas?.map((ventaja: string, index: number) => (
                         <li key={index} className="text-green-700 mb-1">✓ {ventaja}</li>
                       ))}
                     </ul>
@@ -618,7 +579,7 @@ export default function JardinRiemannPage() {
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-2 text-gray-800">Limitaciones</h3>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('riemann')?.limitaciones?.map((limitacion: string, index: number) => (
+                      {escenario.current.obtenerTeoria('riemann')?.limitaciones?.map((limitacion: string, index: number) => (
                         <li key={index} className="text-red-700 mb-1">⚠ {limitacion}</li>
                       ))}
                     </ul>
@@ -630,95 +591,95 @@ export default function JardinRiemannPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Aditividad */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-blue-800">{gestorTeoria.current.obtenerTeoria('aditividad')?.titulo}</h3>
-                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('aditividad')?.definicion}</p>
+                  <h3 className="text-xl font-bold mb-4 text-blue-800">{escenario.current.obtenerTeoria('aditividad')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{escenario.current.obtenerTeoria('aditividad')?.definicion}</p>
                   
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                    <code className="text-lg font-mono text-blue-800">{gestorTeoria.current.obtenerTeoria('aditividad')?.formula}</code>
+                    <code className="text-lg font-mono text-blue-800">{escenario.current.obtenerTeoria('aditividad')?.formula}</code>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('aditividad')?.condiciones?.map((condicion: string, index: number) => (
+                      {escenario.current.obtenerTeoria('aditividad')?.condiciones?.map((condicion: string, index: number) => (
                         <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('aditividad')?.interpretacionGeometrica}</p>
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {escenario.current.obtenerTeoria('aditividad')?.interpretacionGeometrica}</p>
                   </div>
                 </Card>
 
                 {/* Comparación */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-purple-800">{gestorTeoria.current.obtenerTeoria('comparacion')?.titulo}</h3>
-                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('comparacion')?.definicion}</p>
+                  <h3 className="text-xl font-bold mb-4 text-purple-800">{escenario.current.obtenerTeoria('comparacion')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{escenario.current.obtenerTeoria('comparacion')?.definicion}</p>
                   
                   <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
-                    <code className="text-lg font-mono text-purple-800">{gestorTeoria.current.obtenerTeoria('comparacion')?.formula}</code>
+                    <code className="text-lg font-mono text-purple-800">{escenario.current.obtenerTeoria('comparacion')?.formula}</code>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('comparacion')?.condiciones?.map((condicion: string, index: number) => (
+                      {escenario.current.obtenerTeoria('comparacion')?.condiciones?.map((condicion: string, index: number) => (
                         <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('comparacion')?.interpretacionGeometrica}</p>
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {escenario.current.obtenerTeoria('comparacion')?.interpretacionGeometrica}</p>
                   </div>
                 </Card>
 
                 {/* Inversión de Límites */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-red-800">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.titulo}</h3>
-                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.definicion}</p>
+                  <h3 className="text-xl font-bold mb-4 text-red-800">{escenario.current.obtenerTeoria('inversionLimites')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{escenario.current.obtenerTeoria('inversionLimites')?.definicion}</p>
                   
                   <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-4">
-                    <code className="text-lg font-mono text-red-800">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.formula}</code>
+                    <code className="text-lg font-mono text-red-800">{escenario.current.obtenerTeoria('inversionLimites')?.formula}</code>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('inversionLimites')?.condiciones?.map((condicion: string, index: number) => (
+                      {escenario.current.obtenerTeoria('inversionLimites')?.condiciones?.map((condicion: string, index: number) => (
                         <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('inversionLimites')?.interpretacionGeometrica}</p>
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {escenario.current.obtenerTeoria('inversionLimites')?.interpretacionGeometrica}</p>
                   </div>
                 </Card>
 
                 {/* Linealidad */}
-                <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-green-800">{gestorTeoria.current.obtenerTeoria('linealidad')?.titulo}</h3>
-                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('linealidad')?.definicion}</p>
+            <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-green-800">{escenario.current.obtenerTeoria('linealidad')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{escenario.current.obtenerTeoria('linealidad')?.definicion}</p>
                   
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
-                    <code className="text-lg font-mono text-green-800">{gestorTeoria.current.obtenerTeoria('linealidad')?.formula}</code>
+                    <code className="text-lg font-mono text-green-800">{escenario.current.obtenerTeoria('linealidad')?.formula}</code>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
                     <ul className="list-none">
-                      {gestorTeoria.current.obtenerTeoria('linealidad')?.condiciones?.map((condicion: string, index: number) => (
+                      {escenario.current.obtenerTeoria('linealidad')?.condiciones?.map((condicion: string, index: number) => (
                         <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('linealidad')?.interpretacionGeometrica}</p>
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {escenario.current.obtenerTeoria('linealidad')?.interpretacionGeometrica}</p>
                   </div>
-                </Card>
+            </Card>
               </div>
             </div>
           </TabsContent>
@@ -727,26 +688,26 @@ export default function JardinRiemannPage() {
             <div className="space-y-6">
               {/* Ejemplo de Riemann */}
               <Card className="p-6">
-                <h3 className="text-2xl font-bold mb-4 text-blue-800">{generadorEjemplos.current.generarEjemploRiemann().titulo}</h3>
+                <h3 className="text-2xl font-bold mb-4 text-blue-800">{escenario.current.obtenerEjemplo('riemann').titulo}</h3>
                 
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                  <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploRiemann().funcion}</p>
-                  <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploRiemann().intervalo.inicio}, {generadorEjemplos.current.generarEjemploRiemann().intervalo.fin}]</p>
-                  <p className="text-gray-700 mb-2"><strong>Particiones:</strong> {generadorEjemplos.current.generarEjemploRiemann().particiones}</p>
-                  <p className="text-gray-700 mb-2"><strong>Tipo:</strong> Aproximación {generadorEjemplos.current.generarEjemploRiemann().tipoAproximacion}</p>
+                  <p className="text-gray-700 mb-2"><strong>Función:</strong> {escenario.current.obtenerEjemplo('riemann').funcion}</p>
+                  <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{escenario.current.obtenerEjemplo('riemann').intervalo.inicio}, {escenario.current.obtenerEjemplo('riemann').intervalo.fin}]</p>
+                  <p className="text-gray-700 mb-2"><strong>Particiones:</strong> {escenario.current.obtenerEjemplo('riemann').particiones}</p>
+                  <p className="text-gray-700 mb-2"><strong>Tipo:</strong> Aproximación {escenario.current.obtenerEjemplo('riemann').tipoAproximacion}</p>
                 </div>
 
                 <div className="mb-4">
                   <h4 className="font-semibold mb-2 text-gray-800">Pasos:</h4>
                   <ol className="list-decimal list-inside">
-                    {generadorEjemplos.current.generarEjemploRiemann().pasos.map((paso, index) => (
+                    {escenario.current.obtenerEjemplo('riemann').pasos.map((paso: string, index: number) => (
                       <li key={index} className="text-gray-700 mb-2">{paso}</li>
                     ))}
                   </ol>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <p className="text-green-700 font-semibold">{generadorEjemplos.current.generarEjemploRiemann().resultado}</p>
+                  <p className="text-green-700 font-semibold">{escenario.current.obtenerEjemplo('riemann').resultado}</p>
                 </div>
               </Card>
 
@@ -754,12 +715,12 @@ export default function JardinRiemannPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Ejemplo Aditividad */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-blue-800">{generadorEjemplos.current.generarEjemploAditividad().titulo}</h3>
+                  <h3 className="text-xl font-bold mb-4 text-blue-800">{escenario.current.obtenerEjemplo('aditividad').titulo}</h3>
                   
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploAditividad().funcion}</p>
-                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploAditividad().intervalo.inicio}, {generadorEjemplos.current.generarEjemploAditividad().intervalo.fin}]</p>
-                    <p className="text-gray-700 mb-2"><strong>Punto intermedio:</strong> {generadorEjemplos.current.generarEjemploAditividad().puntoIntermedio}</p>
+                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {escenario.current.obtenerEjemplo('aditividad').funcion}</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{escenario.current.obtenerEjemplo('aditividad').intervalo.inicio}, {escenario.current.obtenerEjemplo('aditividad').intervalo.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>Punto intermedio:</strong> {escenario.current.obtenerEjemplo('aditividad').puntoIntermedio}</p>
                   </div>
 
                   <div className="mb-4">
@@ -767,95 +728,95 @@ export default function JardinRiemannPage() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between py-1 border-b border-gray-200">
                         <span className="text-gray-700">Integral completa:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integralCompleta}</code>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('aditividad').calculos.integralCompleta}</code>
                       </div>
                       <div className="flex justify-between py-1 border-b border-gray-200">
                         <span className="text-gray-700">Primera parte:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integral1}</code>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('aditividad').calculos.integral1}</code>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-gray-700">Segunda parte:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integral2}</code>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('aditividad').calculos.integral2}</code>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploAditividad().verificacion}</p>
+                    <p className="text-green-700 font-semibold">Verificación: {escenario.current.obtenerEjemplo('aditividad').verificacion}</p>
                   </div>
                 </Card>
 
                 {/* Ejemplo Comparación */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-purple-800">{generadorEjemplos.current.generarEjemploComparacion().titulo}</h3>
+                  <h3 className="text-xl font-bold mb-4 text-purple-800">{escenario.current.obtenerEjemplo('comparacion').titulo}</h3>
                   
                   <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
-                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploComparacion().funcion1}</strong></p>
-                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploComparacion().funcion2}</strong></p>
-                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploComparacion().intervalo.inicio}, {generadorEjemplos.current.generarEjemploComparacion().intervalo.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>{escenario.current.obtenerEjemplo('comparacion').funcion1}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>{escenario.current.obtenerEjemplo('comparacion').funcion2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{escenario.current.obtenerEjemplo('comparacion').intervalo.inicio}, {escenario.current.obtenerEjemplo('comparacion').intervalo.fin}]</p>
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-gray-700 mb-2">{generadorEjemplos.current.generarEjemploComparacion().verificacion}</p>
+                    <p className="text-gray-700 mb-2">{escenario.current.obtenerEjemplo('comparacion').verificacion}</p>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span className="text-gray-700">{generadorEjemplos.current.generarEjemploComparacion().funcion1} dx:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploComparacion().calculos.integral1}</code>
+                        <span className="text-gray-700">{escenario.current.obtenerEjemplo('comparacion').funcion1} dx:</span>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('comparacion').calculos.integral1}</code>
                       </div>
                       <div className="flex justify-between py-1">
-                        <span className="text-gray-700">{generadorEjemplos.current.generarEjemploComparacion().funcion2} dx:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploComparacion().calculos.integral2}</code>
+                        <span className="text-gray-700">{escenario.current.obtenerEjemplo('comparacion').funcion2} dx:</span>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('comparacion').calculos.integral2}</code>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-green-700 font-semibold">Resultado: {generadorEjemplos.current.generarEjemploComparacion().resultado}</p>
+                    <p className="text-green-700 font-semibold">Resultado: {escenario.current.obtenerEjemplo('comparacion').resultado}</p>
                   </div>
                 </Card>
 
                 {/* Ejemplo Inversión */}
                 <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-red-800">{generadorEjemplos.current.generarEjemploInversionLimites().titulo}</h3>
+                  <h3 className="text-xl font-bold mb-4 text-red-800">{escenario.current.obtenerEjemplo('inversionLimites').titulo}</h3>
                   
                   <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-4">
-                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploInversionLimites().funcion}</p>
-                    <p className="text-gray-700 mb-2"><strong>Intervalo original:</strong> [{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.inicio}, {generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.fin}]</p>
-                    <p className="text-gray-700 mb-2"><strong>Intervalo invertido:</strong> [{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.inicio}, {generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {escenario.current.obtenerEjemplo('inversionLimites').funcion}</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo original:</strong> [{escenario.current.obtenerEjemplo('inversionLimites').intervaloOriginal.inicio}, {escenario.current.obtenerEjemplo('inversionLimites').intervaloOriginal.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo invertido:</strong> [{escenario.current.obtenerEjemplo('inversionLimites').intervaloInvertido.inicio}, {escenario.current.obtenerEjemplo('inversionLimites').intervaloInvertido.fin}]</p>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span className="text-gray-700">∫[{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.inicio},{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.fin}] x² dx:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploInversionLimites().calculos.integralOriginal}</code>
+                        <span className="text-gray-700">∫[{escenario.current.obtenerEjemplo('inversionLimites').intervaloOriginal.inicio},{escenario.current.obtenerEjemplo('inversionLimites').intervaloOriginal.fin}] x² dx:</span>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('inversionLimites').calculos.integralOriginal}</code>
                       </div>
                       <div className="flex justify-between py-1">
-                        <span className="text-gray-700">∫[{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.inicio},{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.fin}] x² dx:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploInversionLimites().calculos.integralInvertida}</code>
+                        <span className="text-gray-700">∫[{escenario.current.obtenerEjemplo('inversionLimites').intervaloInvertido.inicio},{escenario.current.obtenerEjemplo('inversionLimites').intervaloInvertido.fin}] x² dx:</span>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('inversionLimites').calculos.integralInvertida}</code>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploInversionLimites().verificacion}</p>
+                    <p className="text-green-700 font-semibold">Verificación: {escenario.current.obtenerEjemplo('inversionLimites').verificacion}</p>
                   </div>
                 </Card>
 
                 {/* Ejemplo Linealidad */}
-                <Card className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-green-800">{generadorEjemplos.current.generarEjemploLinealidad().titulo}</h3>
+            <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-green-800">{escenario.current.obtenerEjemplo('linealidad').titulo}</h3>
                   
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
-                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploLinealidad().funcion1}</strong></p>
-                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploLinealidad().funcion2}</strong></p>
-                    <p className="text-gray-700 mb-2"><strong>α = {generadorEjemplos.current.generarEjemploLinealidad().constante1}, β = {generadorEjemplos.current.generarEjemploLinealidad().constante2}</strong></p>
-                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploLinealidad().intervalo.inicio}, {generadorEjemplos.current.generarEjemploLinealidad().intervalo.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>{escenario.current.obtenerEjemplo('linealidad').funcion1}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>{escenario.current.obtenerEjemplo('linealidad').funcion2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>α = {escenario.current.obtenerEjemplo('linealidad').constante1}, β = {escenario.current.obtenerEjemplo('linealidad').constante2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{escenario.current.obtenerEjemplo('linealidad').intervalo.inicio}, {escenario.current.obtenerEjemplo('linealidad').intervalo.fin}]</p>
                   </div>
 
                   <div className="mb-4">
@@ -863,19 +824,19 @@ export default function JardinRiemannPage() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between py-1 border-b border-gray-200">
                         <span className="text-gray-700">Lado izquierdo:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploLinealidad().calculos.ladoIzquierdo}</code>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('linealidad').calculos.ladoIzquierdo}</code>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-gray-700">Lado derecho:</span>
-                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploLinealidad().calculos.ladoDerecho}</code>
+                        <code className="font-mono text-blue-600">{escenario.current.obtenerEjemplo('linealidad').calculos.ladoDerecho}</code>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploLinealidad().verificacion}</p>
+                    <p className="text-green-700 font-semibold">Verificación: {escenario.current.obtenerEjemplo('linealidad').verificacion}</p>
                   </div>
-                </Card>
+            </Card>
               </div>
             </div>
           </TabsContent>
