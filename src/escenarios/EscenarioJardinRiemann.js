@@ -66,38 +66,46 @@ export class EscenarioJardinRiemann extends Escenario {
   }
 
   actualizarMacetas(numeroMacetas) {
-    this.estado.actualizarMacetas(numeroMacetas)
-    this.calcularYActualizar()
-    this.onEstadoCambiado()
+    if (this.estado) {
+      this.estado.actualizarMacetas(numeroMacetas)
+      this.calcularYActualizar()
+      this.onEstadoCambiado()
+    }
   }
 
   actualizarLimites(limiteIzquierdo, limiteDerecho) {
-    this.estado.actualizarLimites(limiteIzquierdo, limiteDerecho)
-    this.calcularYActualizar()
-    this.onEstadoCambiado()
+    if (this.estado) {
+      this.estado.actualizarLimites(limiteIzquierdo, limiteDerecho)
+      this.calcularYActualizar()
+      this.onEstadoCambiado()
+    }
   }
 
   cambiarTipoHechizo(tipo) {
-    this.estado.cambiarTipoHechizo(tipo)
-    this.calcularYActualizar()
-    this.onEstadoCambiado()
+    if (this.estado) {
+      this.estado.cambiarTipoHechizo(tipo)
+      this.calcularYActualizar()
+      this.onEstadoCambiado()
+    }
   }
 
   cambiarModoAprendizaje(modo) {
-    this.estado.cambiarModoAprendizaje(modo)
-    this.onEstadoCambiado()
+    if (this.estado) {
+      this.estado.cambiarModoAprendizaje(modo)
+      this.onEstadoCambiado()
+    }
   }
 
   toggleAnimacion() {
-    if (this.gestorAnimacion.estaActiva()) {
+    if (this.gestorAnimacion && this.gestorAnimacion.estaActiva()) {
       this.gestorAnimacion.detener()
       this.estado.toggleAnimacion()
-    } else {
+    } else if (this.gestorAnimacion) {
       this.gestorAnimacion.iniciar(this.estado.numeroMacetas, 50, (macetas) => {
-      this.estado.actualizarMacetas(macetas)
-      this.calcularYActualizar()
-      this.onEstadoCambiado()
-    })
+        this.estado.actualizarMacetas(macetas)
+        this.calcularYActualizar()
+        this.onEstadoCambiado()
+      })
       this.estado.toggleAnimacion()
     }
     this.onEstadoCambiado()
@@ -105,7 +113,9 @@ export class EscenarioJardinRiemann extends Escenario {
 
   actualizarVelocidadAnimacion(velocidad) {
     this.estado.actualizarVelocidad(velocidad)
-    this.gestorAnimacion.cambiarVelocidad(velocidad)
+    if (this.gestorAnimacion) {
+      this.gestorAnimacion.cambiarVelocidad(velocidad)
+    }
     this.onEstadoCambiado()
   }
 
@@ -179,16 +189,15 @@ export class EscenarioJardinRiemann extends Escenario {
   reiniciar() {
     super.reiniciar()
     
-    // Verificar que los servicios estén inicializados
-    if (this.estado) {
-      this.estado.reiniciar()
-    }
-    if (this.gestorMetricas) {
-      this.gestorMetricas.reiniciar()
-    }
-    if (this.gestorLogros) {
-      this.gestorLogros.reiniciar()
-    }
+    // Reinicializar completamente el escenario
+    this.estado = new EstadoVisualizacion()
+    this.gestorMetricas = new GestorMetricas()
+    this.gestorLogros = new GestorLogros()
+    this.gestorAnimacion = new GestorAnimacion()
+    
+    // Resetear función actual y resultados
+    this.funcionActual = "parabola"
+    this.estado.funcion = this.funciones[this.funcionActual]
     
     this.resultados = {
       aproximacionRiemann: 0,
@@ -196,6 +205,9 @@ export class EscenarioJardinRiemann extends Escenario {
       errorAbsoluto: 0,
       precision: 0
     }
+    
+    // Recalcular con los valores por defecto
+    this.calcularYActualizar()
     this.onEstadoCambiado()
   }
 
