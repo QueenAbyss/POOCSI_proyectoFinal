@@ -25,6 +25,8 @@ import { RenderizadorPuntos } from "@/src/presentacion/RenderizadorPuntos"
 import { GestorInteraccion } from "@/src/interaccion/GestorInteraccion"
 import { PuntoInteractivo } from "@/src/entidades/PuntoInteractivo"
 import { AlmacenadorProgreso } from "@/src/persistencia/AlmacenadorProgreso"
+import { GestorTeoria } from "@/src/servicios/GestorTeoria"
+import { GeneradorEjemplos } from "@/src/servicios/GeneradorEjemplos"
 
 export default function JardinRiemannPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -39,6 +41,8 @@ export default function JardinRiemannPage() {
   const gestorMetricas = useRef(new GestorMetricas())
   const almacenador = useRef(new AlmacenadorProgreso())
   const gestorInteraccion = useRef<GestorInteraccion | null>(null)
+  const gestorTeoria = useRef(new GestorTeoria())
+  const generadorEjemplos = useRef(new GeneradorEjemplos())
 
   // Estado React para UI
   const [funcionActual, setFuncionActual] = useState("parabola")
@@ -69,11 +73,13 @@ export default function JardinRiemannPage() {
     const transformador = new TransformadorCoordenadas(configuracion, intervaloX, intervaloY)
 
     gestorInteraccion.current = new GestorInteraccion(canvasRef.current, transformador)
-    gestorInteraccion.current.callbacks.onLimiteIzquierdoCambiado = (x) => {
+    // Type assertion to bypass callback type restrictions
+    const callbacks = gestorInteraccion.current.callbacks as any
+    callbacks.onLimiteIzquierdoCambiado = (x: number) => {
       estado.actualizarLimites(x, estado.limiteDerecho)
       calcularYRenderizar()
     }
-    gestorInteraccion.current.callbacks.onLimiteDerechoCambiado = (x) => {
+    callbacks.onLimiteDerechoCambiado = (x: number) => {
       estado.actualizarLimites(estado.limiteIzquierdo, x)
       calcularYRenderizar()
     }
@@ -162,9 +168,9 @@ export default function JardinRiemannPage() {
   const toggleAnimacion = () => {
     if (gestorAnimacion.current.estaActiva()) {
       gestorAnimacion.current.detener()
-      estado.detener()
+      estado.toggleAnimacion()
     } else {
-      gestorAnimacion.current.iniciar(estado.numeroMacetas, 50, (macetas) => {
+      gestorAnimacion.current.iniciar(estado.numeroMacetas, 50, (macetas: number) => {
         estado.actualizarMacetas(macetas)
         calcularYRenderizar()
         setForceUpdate((n) => n + 1)
@@ -190,9 +196,9 @@ export default function JardinRiemannPage() {
   }
 
   const expresionesFunciones = {
-    parabola: "f(x) = 0.5x² + 1",
+    parabola: "f(x) = 0.5x^2 + 1",
     seno: "f(x) = 2sin(x) + 3",
-    cubica: "f(x) = 0.1x³ + 0.5x² + 2",
+    cubica: "f(x) = 0.1x^3 + 0.5x^2 + 2",
   }
 
   return (
@@ -254,7 +260,7 @@ export default function JardinRiemannPage() {
                     <div className="pt-3 border-t border-green-100">
                       <div className="text-sm text-gray-600 mb-1">Integral Definida:</div>
                       <div className="text-lg font-mono text-blue-600">
-                        ∫[{estado.limiteIzquierdo.toFixed(1)}, {estado.limiteDerecho.toFixed(1)}] f(x)dx
+                        integral[{estado.limiteIzquierdo.toFixed(1)}, {estado.limiteDerecho.toFixed(1)}] f(x)dx
                       </div>
                     </div>
                   </div>
@@ -554,17 +560,324 @@ export default function JardinRiemannPage() {
           </TabsContent>
 
           <TabsContent value="teoria">
-            <Card className="p-6">
-              <h3 className="text-2xl font-bold mb-4">Teoría: Sumas de Riemann</h3>
-              <p className="text-gray-700">Contenido teórico sobre sumas de Riemann...</p>
-            </Card>
+            <div className="space-y-6">
+              {/* Teoría de Riemann */}
+              <Card className="p-6">
+                <div className="teoria-container">
+                  <h2 className="text-2xl font-bold mb-4 text-green-800">{gestorTeoria.current.obtenerTeoria('riemann')?.titulo}</h2>
+                  
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Definición</h3>
+                    <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('riemann')?.definicion}</p>
+                  </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Fórmula</h3>
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <code className="text-lg font-mono text-blue-800">{gestorTeoria.current.obtenerTeoria('riemann')?.formula}</code>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Símbolos</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      {Object.entries(gestorTeoria.current.obtenerTeoria('riemann')?.simbolos || {}).map(([simbolo, descripcion], index: number, array: any[]) => (
+                        <div key={simbolo} className={`flex justify-between py-1 ${index < array.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                          <code className="font-mono text-blue-600">{simbolo}</code>
+                          <span className="text-gray-700">{descripcion as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Tipos de Aproximación</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {Object.entries(gestorTeoria.current.obtenerTeoria('riemann')?.tiposAproximacion || {}).map(([tipo, descripcion], index: number) => {
+                        const colors = ['green', 'blue', 'purple']
+                        const color = colors[index % colors.length]
+                        return (
+                          <div key={tipo} className={`bg-${color}-50 p-4 rounded-lg border border-${color}-200`}>
+                            <h4 className={`font-semibold text-${color}-800 mb-2 capitalize`}>{tipo}</h4>
+                            <p className="text-sm text-gray-700">{descripcion as string}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Ventajas</h3>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('riemann')?.ventajas?.map((ventaja: string, index: number) => (
+                        <li key={index} className="text-green-700 mb-1">✓ {ventaja}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">Limitaciones</h3>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('riemann')?.limitaciones?.map((limitacion: string, index: number) => (
+                        <li key={index} className="text-red-700 mb-1">⚠ {limitacion}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Propiedades de las Integrales */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Aditividad */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-blue-800">{gestorTeoria.current.obtenerTeoria('aditividad')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('aditividad')?.definicion}</p>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                    <code className="text-lg font-mono text-blue-800">{gestorTeoria.current.obtenerTeoria('aditividad')?.formula}</code>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('aditividad')?.condiciones?.map((condicion: string, index: number) => (
+                        <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('aditividad')?.interpretacionGeometrica}</p>
+                  </div>
+                </Card>
+
+                {/* Comparación */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-purple-800">{gestorTeoria.current.obtenerTeoria('comparacion')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('comparacion')?.definicion}</p>
+                  
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                    <code className="text-lg font-mono text-purple-800">{gestorTeoria.current.obtenerTeoria('comparacion')?.formula}</code>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('comparacion')?.condiciones?.map((condicion: string, index: number) => (
+                        <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('comparacion')?.interpretacionGeometrica}</p>
+                  </div>
+                </Card>
+
+                {/* Inversión de Límites */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-red-800">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.definicion}</p>
+                  
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-4">
+                    <code className="text-lg font-mono text-red-800">{gestorTeoria.current.obtenerTeoria('inversionLimites')?.formula}</code>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('inversionLimites')?.condiciones?.map((condicion: string, index: number) => (
+                        <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('inversionLimites')?.interpretacionGeometrica}</p>
+                  </div>
+                </Card>
+
+                {/* Linealidad */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-green-800">{gestorTeoria.current.obtenerTeoria('linealidad')?.titulo}</h3>
+                  <p className="text-gray-700 mb-4">{gestorTeoria.current.obtenerTeoria('linealidad')?.definicion}</p>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
+                    <code className="text-lg font-mono text-green-800">{gestorTeoria.current.obtenerTeoria('linealidad')?.formula}</code>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Condiciones:</h4>
+                    <ul className="list-none">
+                      {gestorTeoria.current.obtenerTeoria('linealidad')?.condiciones?.map((condicion: string, index: number) => (
+                        <li key={index} className="text-gray-700 mb-1">• {condicion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <p className="text-gray-700"><strong>Interpretación:</strong> {gestorTeoria.current.obtenerTeoria('linealidad')?.interpretacionGeometrica}</p>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="ejemplos">
-            <Card className="p-6">
-              <h3 className="text-2xl font-bold mb-4">Ejemplos Prácticos</h3>
-              <p className="text-gray-700">Ejemplos resueltos paso a paso...</p>
-            </Card>
+            <div className="space-y-6">
+              {/* Ejemplo de Riemann */}
+              <Card className="p-6">
+                <h3 className="text-2xl font-bold mb-4 text-blue-800">{generadorEjemplos.current.generarEjemploRiemann().titulo}</h3>
+                
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                  <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploRiemann().funcion}</p>
+                  <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploRiemann().intervalo.inicio}, {generadorEjemplos.current.generarEjemploRiemann().intervalo.fin}]</p>
+                  <p className="text-gray-700 mb-2"><strong>Particiones:</strong> {generadorEjemplos.current.generarEjemploRiemann().particiones}</p>
+                  <p className="text-gray-700 mb-2"><strong>Tipo:</strong> Aproximación {generadorEjemplos.current.generarEjemploRiemann().tipoAproximacion}</p>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-2 text-gray-800">Pasos:</h4>
+                  <ol className="list-decimal list-inside">
+                    {generadorEjemplos.current.generarEjemploRiemann().pasos.map((paso, index) => (
+                      <li key={index} className="text-gray-700 mb-2">{paso}</li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <p className="text-green-700 font-semibold">{generadorEjemplos.current.generarEjemploRiemann().resultado}</p>
+                </div>
+              </Card>
+
+              {/* Ejemplos de Propiedades */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Ejemplo Aditividad */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-blue-800">{generadorEjemplos.current.generarEjemploAditividad().titulo}</h3>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploAditividad().funcion}</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploAditividad().intervalo.inicio}, {generadorEjemplos.current.generarEjemploAditividad().intervalo.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>Punto intermedio:</strong> {generadorEjemplos.current.generarEjemploAditividad().puntoIntermedio}</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span className="text-gray-700">Integral completa:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integralCompleta}</code>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span className="text-gray-700">Primera parte:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integral1}</code>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-700">Segunda parte:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploAditividad().calculos.integral2}</code>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploAditividad().verificacion}</p>
+                  </div>
+                </Card>
+
+                {/* Ejemplo Comparación */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-purple-800">{generadorEjemplos.current.generarEjemploComparacion().titulo}</h3>
+                  
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploComparacion().funcion1}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploComparacion().funcion2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploComparacion().intervalo.inicio}, {generadorEjemplos.current.generarEjemploComparacion().intervalo.fin}]</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-gray-700 mb-2">{generadorEjemplos.current.generarEjemploComparacion().verificacion}</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span className="text-gray-700">{generadorEjemplos.current.generarEjemploComparacion().funcion1} dx:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploComparacion().calculos.integral1}</code>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-700">{generadorEjemplos.current.generarEjemploComparacion().funcion2} dx:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploComparacion().calculos.integral2}</code>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-green-700 font-semibold">Resultado: {generadorEjemplos.current.generarEjemploComparacion().resultado}</p>
+                  </div>
+                </Card>
+
+                {/* Ejemplo Inversión */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-red-800">{generadorEjemplos.current.generarEjemploInversionLimites().titulo}</h3>
+                  
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-4">
+                    <p className="text-gray-700 mb-2"><strong>Función:</strong> {generadorEjemplos.current.generarEjemploInversionLimites().funcion}</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo original:</strong> [{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.inicio}, {generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.fin}]</p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo invertido:</strong> [{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.inicio}, {generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.fin}]</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span className="text-gray-700">∫[{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.inicio},{generadorEjemplos.current.generarEjemploInversionLimites().intervaloOriginal.fin}] x² dx:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploInversionLimites().calculos.integralOriginal}</code>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-700">∫[{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.inicio},{generadorEjemplos.current.generarEjemploInversionLimites().intervaloInvertido.fin}] x² dx:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploInversionLimites().calculos.integralInvertida}</code>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploInversionLimites().verificacion}</p>
+                  </div>
+                </Card>
+
+                {/* Ejemplo Linealidad */}
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-green-800">{generadorEjemplos.current.generarEjemploLinealidad().titulo}</h3>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-4">
+                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploLinealidad().funcion1}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>{generadorEjemplos.current.generarEjemploLinealidad().funcion2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>α = {generadorEjemplos.current.generarEjemploLinealidad().constante1}, β = {generadorEjemplos.current.generarEjemploLinealidad().constante2}</strong></p>
+                    <p className="text-gray-700 mb-2"><strong>Intervalo:</strong> [{generadorEjemplos.current.generarEjemploLinealidad().intervalo.inicio}, {generadorEjemplos.current.generarEjemploLinealidad().intervalo.fin}]</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2 text-gray-800">Cálculos:</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span className="text-gray-700">Lado izquierdo:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploLinealidad().calculos.ladoIzquierdo}</code>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-700">Lado derecho:</span>
+                        <code className="font-mono text-blue-600">{generadorEjemplos.current.generarEjemploLinealidad().calculos.ladoDerecho}</code>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-green-700 font-semibold">Verificación: {generadorEjemplos.current.generarEjemploLinealidad().verificacion}</p>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
