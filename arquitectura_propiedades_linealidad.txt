@@ -1,0 +1,117 @@
+ARQUITECTURA OOP PARA VISUALIZACIONES DE PROPIEDADES - LINEALIDAD
+================================================================
+
+ANÁLISIS DE MOCKUPS:
+===================
+
+MOCKUP 1 - SELECCIÓN DE PROPIEDADES:
+- Pantalla de selección con 4 propiedades (Linealidad, Aditividad, Inversión, Comparación)
+- Botón "Volver al Jardín Mágico" 
+- Enfoque en Linealidad como primera implementación
+
+MOCKUP 2 - INTERFAZ DE LINEALIDAD:
+- Panel izquierdo: "Controles Mágicos" con:
+  * Selectores de funciones f(x) y g(x)
+  * Sliders para α y β (rango -5 a 5, paso 0.1)
+  * Inputs para límites a y b
+- Panel derecho: "Visualización Mágica" con gráfico
+- Panel inferior: 3 tarjetas de cálculos
+- NO hay logros ni tiempo (solo verificación matemática)
+
+ARQUITECTURA OOP PROPUESTA:
+===========================
+
+1. ENTIDADES (SRP: Solo datos):
+   - EstadoLinealidad.js
+   - ConfiguracionLinealidad.js
+   - FuncionMatematica.js (reutilizar)
+
+2. SERVICIOS (SRP: Solo lógica de negocio):
+   - CalculadoraLinealidad.js
+   - VerificadorLinealidad.js
+   - GestorFuncionesLinealidad.js
+
+3. RENDERIZADORES (SRP: Solo presentación):
+   - RenderizadorGraficoLinealidad.js
+   - RenderizadorControlesLinealidad.js
+   - RenderizadorCalculosLinealidad.js
+
+4. GESTORES (SRP: Solo coordinación):
+   - GestorVisualizacionLinealidad.js
+   - GestorInteraccionLinealidad.js
+
+5. INTEGRACIÓN:
+   - Extender EscenarioJardinRiemann con modo "propiedades"
+   - Crear EscenarioPropiedadesLinealidad.js
+
+CLASES ESPECÍFICAS A CREAR:
+=========================
+
+1. EstadoLinealidad.js:
+   - fFuncion, gFuncion (strings)
+   - alpha, beta (numbers)
+   - limiteA, limiteB (numbers)
+   - calculos (object)
+   - validacion (object)
+
+2. CalculadoraLinealidad.js:
+   - calcularIntegralF()
+   - calcularIntegralG()
+   - calcularCombinacionLineal()
+   - verificarPropiedad()
+
+3. RenderizadorGraficoLinealidad.js:
+   - renderizarFunciones()
+   - renderizarAreas()
+   - renderizarLeyenda()
+
+4. GestorVisualizacionLinealidad.js:
+   - coordinarCalculos()
+   - coordinarRenderizado()
+   - manejarInteracciones()
+
+INTEGRACIÓN CON EXISTENTES:
+==========================
+
+REUTILIZAR:
+- FuncionMatematica.js (entidad)
+- TransformadorCoordenadas.js (servicio)
+- GestorAnimacion.js (servicio)
+- RenderizadorCanvas.js (presentación)
+
+CREAR NUEVOS:
+- Todas las clases específicas de linealidad
+- Extensión de EscenarioJardinRiemann
+- GestorPropiedadesMágicas.js (Factory)
+
+FLUJO DE IMPLEMENTACIÓN:
+=======================
+
+1. Crear entidades de estado
+2. Crear servicios de cálculo
+3. Crear renderizadores específicos
+4. Crear gestores de coordinación
+5. Integrar con EscenarioJardinRiemann
+6. Crear interfaz de selección de propiedades
+7. Implementar navegación entre modos
+
+CARACTERÍSTICAS ESPECÍFICAS:
+===========================
+
+- Sliders con rango -5 a 5, paso 0.1
+- Selectores de funciones predefinidas
+- Gráfico con 3 líneas superpuestas
+- Cálculos en tiempo real
+- Verificación automática
+- Sin logros ni tiempo
+- Tooltips interactivos
+- Colores específicos por función
+
+CASOS ESPECIALES:
+================
+
+- α = 0: Solo βg(x)
+- β = 0: Solo αf(x)  
+- α = β = 1: f(x) + g(x)
+- Valores negativos: Inversión de función
+- Tolerancia de error: 0.001

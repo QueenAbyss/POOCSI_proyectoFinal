@@ -17,6 +17,7 @@ import { RenderizadorPuntos } from "@/src/presentacion/RenderizadorPuntos"
 import { GestorInteraccion } from "@/src/interaccion/GestorInteraccion"
 import { PuntoInteractivo } from "@/src/entidades/PuntoInteractivo"
 import { CalculadoraRiemann } from "@/src/servicios/CalculadoraRiemann"
+import LinealidadDemo from "./LinealidadDemo"
 
 export default function JardinRiemannPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -35,9 +36,22 @@ export default function JardinRiemannPage() {
   const [metricas, setMetricas] = useState<any>({})
   const [, setForceUpdate] = useState(0)
 
+  // Estado para propiedades mágicas
+  const [mostrarPropiedades, setMostrarPropiedades] = useState(false)
+  const [propiedadSeleccionada, setPropiedadSeleccionada] = useState<string | null>(null)
+  const [mostrarLinealidad, setMostrarLinealidad] = useState(false)
+
   // Referencias para renderizado
   const gestorInteraccion = useRef<GestorInteraccion | null>(null)
   const calculadoraRiemann = useRef(new CalculadoraRiemann())
+
+  // Manejar selección de propiedad mágica
+  useEffect(() => {
+    if (propiedadSeleccionada === 'linealidad') {
+      setMostrarLinealidad(true)
+      setPropiedadSeleccionada(null)
+    }
+  }, [propiedadSeleccionada])
 
   // Inicializar escenario
   useEffect(() => {
@@ -164,7 +178,11 @@ export default function JardinRiemannPage() {
               </p>
             </div>
           </div>
-          <Button variant="outline" className="gap-2 bg-transparent">
+          <Button 
+            variant="outline" 
+            className="gap-2 bg-transparent"
+            onClick={() => setMostrarPropiedades(true)}
+          >
             <span className="text-purple-600">✨</span>
             Propiedades Mágicas
           </Button>
@@ -469,7 +487,7 @@ export default function JardinRiemannPage() {
                           if (escenario.current && escenario.current.estado) {
                             escenario.current.actualizarLimites(escenario.current.estado.limiteIzquierdo, value)
                             actualizarUI()
-                            setForceUpdate((n) => n + 1)
+                          setForceUpdate((n) => n + 1)
                           }
                         }}
                         min={0}
@@ -842,6 +860,133 @@ export default function JardinRiemannPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Mostrar Linealidad Demo */}
+      {mostrarLinealidad && (
+        <LinealidadDemo onBack={() => setMostrarLinealidad(false)} />
+      )}
+
+      {/* Modal de Propiedades Mágicas */}
+      {mostrarPropiedades && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Propiedades Mágicas de las Integrales</h2>
+              <Button 
+                variant="outline" 
+                onClick={() => setMostrarPropiedades(false)}
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              Explora las cuatro propiedades fundamentales del cálculo integral de forma interactiva
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Linealidad */}
+              <Card className="p-6 border-l-4 border-blue-500">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-500 rounded mr-3 flex items-center justify-center">
+                    <span className="text-white text-sm">📊</span>
+                  </div>
+                  <h3 className="text-lg font-semibold">Linealidad</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  La integral de una combinación lineal es igual a la combinación lineal de las integrales.
+                </p>
+                <div className="bg-gray-100 p-3 rounded mb-4">
+                  <code className="text-sm">
+                    ∫[a,b] (αf(x) + βg(x)) dx = α∫[a,b] f(x) dx + β∫[a,b] g(x) dx
+                  </code>
+                </div>
+                <Button 
+                  className="w-full bg-blue-500 hover:bg-blue-600"
+                  onClick={() => {
+                    setPropiedadSeleccionada('linealidad')
+                    setMostrarPropiedades(false)
+                  }}
+                >
+                  Ver ejemplo interactivo
+                </Button>
+              </Card>
+
+              {/* Aditividad */}
+              <Card className="p-6 border-l-4 border-green-500">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-500 rounded mr-3 flex items-center justify-center">
+                    <span className="text-white text-sm">🏔️</span>
+                  </div>
+                  <h3 className="text-lg font-semibold">Aditividad</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  La integral sobre un intervalo puede dividirse en la suma de integrales sobre subintervalos.
+                </p>
+                <div className="bg-gray-100 p-3 rounded mb-4">
+                  <code className="text-sm">
+                    ∫[a,c] f(x) dx = ∫[a,b] f(x) dx + ∫[b,c] f(x) dx
+                  </code>
+                </div>
+                <Button 
+                  className="w-full bg-green-500 hover:bg-green-600"
+                  disabled
+                >
+                  Próximamente
+                </Button>
+              </Card>
+
+              {/* Inversión de Límites */}
+              <Card className="p-6 border-l-4 border-orange-500">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-orange-500 rounded mr-3 flex items-center justify-center">
+                    <span className="text-white text-sm">🔄</span>
+                  </div>
+                  <h3 className="text-lg font-semibold">Inversión de Límites</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Invertir los límites de integración cambia el signo de la integral.
+                </p>
+                <div className="bg-gray-100 p-3 rounded mb-4">
+                  <code className="text-sm">
+                    ∫[a,b] f(x) dx = -∫[b,a] f(x) dx
+                  </code>
+                </div>
+                <Button 
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  disabled
+                >
+                  Próximamente
+                </Button>
+              </Card>
+
+              {/* Comparación */}
+              <Card className="p-6 border-l-4 border-purple-500">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-purple-500 rounded mr-3 flex items-center justify-center">
+                    <span className="text-white text-sm">📈</span>
+                  </div>
+                  <h3 className="text-lg font-semibold">Propiedad de Comparación</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Si una función es menor o igual que otra, su integral también es menor o igual.
+                </p>
+                <div className="bg-gray-100 p-3 rounded mb-4">
+                  <code className="text-sm">
+                    Si f(x) ≤ g(x) en [a,b] → ∫[a,b] f(x) dx ≤ ∫[a,b] g(x) dx
+                  </code>
+                </div>
+                <Button 
+                  className="w-full bg-purple-500 hover:bg-purple-600"
+                  disabled
+                >
+                  Próximamente
+                </Button>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -12,14 +12,23 @@ export class TransformadorCoordenadas {
   }
 
   matematicasACanvas(x, y) {
-    const canvasX = this.area.x + (x - this.intervaloX.inicio) * this.escalas.escalaX
-    const canvasY = this.area.y + this.area.alto - (y - this.intervaloY.min) * this.escalas.escalaY
+    // Usar min si existe, sino usar inicio (compatibilidad)
+    const inicioX = this.intervaloX.min !== undefined ? this.intervaloX.min : this.intervaloX.inicio
+    const inicioY = this.intervaloY.min !== undefined ? this.intervaloY.min : this.intervaloY.inicio
+    
+    const canvasX = this.area.x + (x - inicioX) * this.escalas.escalaX
+    const canvasY = this.area.y + this.area.alto - (y - inicioY) * this.escalas.escalaY
+    
     return { x: canvasX, y: canvasY }
   }
 
   canvasAMatematicas(canvasX, canvasY) {
-    const x = this.intervaloX.inicio + (canvasX - this.area.x) / this.escalas.escalaX
-    const y = this.intervaloY.min + (this.area.y + this.area.alto - canvasY) / this.escalas.escalaY
+    // Usar min si existe, sino usar inicio (compatibilidad)
+    const inicioX = this.intervaloX.min !== undefined ? this.intervaloX.min : this.intervaloX.inicio
+    const inicioY = this.intervaloY.min !== undefined ? this.intervaloY.min : this.intervaloY.inicio
+    
+    const x = inicioX + (canvasX - this.area.x) / this.escalas.escalaX
+    const y = inicioY + (this.area.y + this.area.alto - canvasY) / this.escalas.escalaY
     return { x, y }
   }
 

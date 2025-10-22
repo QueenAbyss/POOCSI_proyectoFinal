@@ -15,6 +15,7 @@ import { GestorMetricas } from "../servicios/GestorMetricas.js"
 import { GestorTeoria } from "../servicios/GestorTeoria.js"
 import { GeneradorEjemplos } from "../servicios/GeneradorEjemplos.js"
 import { FuncionMatematica } from "../entidades/FuncionMatematica.js"
+import { GestorPropiedadesMagicas } from "../servicios/GestorPropiedadesMagicas.js"
 
 export class EscenarioJardinRiemann extends Escenario {
   constructor() {
@@ -34,6 +35,7 @@ export class EscenarioJardinRiemann extends Escenario {
     this.gestorMetricas = new GestorMetricas()
     this.gestorTeoria = new GestorTeoria()
     this.generadorEjemplos = new GeneradorEjemplos()
+    this.gestorPropiedadesMagicas = new GestorPropiedadesMagicas()
     
     // Funciones disponibles
     this.funciones = {
@@ -218,7 +220,29 @@ export class EscenarioJardinRiemann extends Escenario {
       resultados: this.resultados,
       logros: this.obtenerLogros(),
       metricas: this.obtenerMetricas(),
-      funciones: Object.keys(this.funciones)
+      funciones: Object.keys(this.funciones),
+      propiedadesMagicas: this.gestorPropiedadesMagicas.obtenerPropiedadesDisponibles()
     }
+  }
+
+  // Métodos para propiedades mágicas
+  obtenerPropiedadesMagicas() {
+    return this.gestorPropiedadesMagicas.obtenerPropiedadesDisponibles()
+  }
+
+  activarPropiedadMagica(id) {
+    return this.gestorPropiedadesMagicas.activarPropiedad(id)
+  }
+
+  obtenerEscenarioPropiedadActiva() {
+    return this.gestorPropiedadesMagicas.obtenerEscenarioActivo()
+  }
+
+  desactivarPropiedadMagica() {
+    this.gestorPropiedadesMagicas.desactivarPropiedad()
+  }
+
+  hayPropiedadMagicaActiva() {
+    return this.gestorPropiedadesMagicas.hayPropiedadActiva()
   }
 }
