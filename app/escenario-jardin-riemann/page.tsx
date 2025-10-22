@@ -53,6 +53,9 @@ export default function JardinRiemannPage() {
     } else if (propiedadSeleccionada === 'aditividad') {
       // Redirigir a la página de aditividad
       window.location.href = '/escenario-jardin-riemann/aditividad'
+    } else if (propiedadSeleccionada === 'inversion') {
+      // Redirigir a la página de inversión de límites
+      window.location.href = '/escenario-jardin-riemann/inversion-limites'
     }
   }, [propiedadSeleccionada])
 
@@ -960,9 +963,12 @@ export default function JardinRiemannPage() {
                 </div>
                 <Button 
                   className="w-full bg-orange-500 hover:bg-orange-600"
-                  disabled
+                  onClick={() => {
+                    setPropiedadSeleccionada('inversion')
+                    setMostrarPropiedades(false)
+                  }}
                 >
-                  Próximamente
+                  Ver ejemplo interactivo
                 </Button>
               </Card>
 

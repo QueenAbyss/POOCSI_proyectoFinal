@@ -29,7 +29,6 @@ export class RenderizadorFuncion {
         ctx.lineTo(pos.x, pos.y)
       }
     }
-
     ctx.stroke()
   }
 }

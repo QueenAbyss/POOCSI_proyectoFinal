@@ -8,7 +8,7 @@ export class TransformadorCoordenadas {
     this.intervaloX = intervaloX
     this.intervaloY = intervaloY
     this.area = configuracion.obtenerAreaDibujo()
-    this.escalas = configuracion.calcularEscalas(intervaloX, intervaloY)
+    this.escalas = this.calcularEscalas(intervaloX, intervaloY)
   }
 
   matematicasACanvas(x, y) {
@@ -43,12 +43,29 @@ export class TransformadorCoordenadas {
   // Actualizar intervalo X
   actualizarIntervaloX(nuevoIntervaloX) {
     this.intervaloX = nuevoIntervaloX
-    this.escalas = this.configuracion.calcularEscalas(this.intervaloX, this.intervaloY)
+    this.escalas = this.calcularEscalas(this.intervaloX, this.intervaloY)
   }
 
   // Actualizar intervalo Y
   actualizarIntervaloY(nuevoIntervaloY) {
     this.intervaloY = nuevoIntervaloY
-    this.escalas = this.configuracion.calcularEscalas(this.intervaloX, this.intervaloY)
+    this.escalas = this.calcularEscalas(this.intervaloX, this.intervaloY)
+  }
+
+  // Calcular escalas basado en intervalos y área de dibujo
+  calcularEscalas(intervaloX, intervaloY) {
+    // Compatibilidad con diferentes formatos de intervalo
+    const inicioX = intervaloX.min !== undefined ? intervaloX.min : intervaloX.inicio
+    const finX = intervaloX.max !== undefined ? intervaloX.max : intervaloX.fin
+    const inicioY = intervaloY.min !== undefined ? intervaloY.min : intervaloY.inicio
+    const finY = intervaloY.max !== undefined ? intervaloY.max : intervaloY.fin
+    
+    const rangoX = finX - inicioX
+    const rangoY = finY - inicioY
+    
+    const escalaX = this.area.ancho / rangoX
+    const escalaY = this.area.alto / rangoY
+    
+    return { escalaX, escalaY }
   }
 }
