@@ -27,6 +27,7 @@ interface LinealidadDemoProps {
 export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerCalculosRef = useRef<HTMLDivElement>(null)
+  const containerTooltipRef = useRef<HTMLDivElement>(null)
   
   // Referencias a las clases OOP
   const escenarioLinealidad = useRef<EscenarioPropiedadesLinealidad | null>(null)
@@ -63,7 +64,11 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
       
       // Configurar canvas
       if (canvasRef.current && containerCalculosRef.current) {
-        escenarioLinealidad.current.configurarCanvas(canvasRef.current, containerCalculosRef.current)
+        escenarioLinealidad.current.configurarCanvas(
+          canvasRef.current, 
+          containerCalculosRef.current,
+          containerTooltipRef.current
+        )
         
         // Obtener renderizadores
         renderizadorGrafico.current = escenarioLinealidad.current.renderizadorGrafico
@@ -112,7 +117,10 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
   // Renderizar cuando el canvas esté listo
   useEffect(() => {
     if (canvasRef.current && renderizadorGrafico.current && estado.current) {
-      renderizar()
+      // Forzar re-renderizado
+      setTimeout(() => {
+        renderizar()
+      }, 100)
     }
   }, [canvasRef.current, renderizadorGrafico.current, estado.current])
 
@@ -138,7 +146,7 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-7xl w-full mx-4 max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-[95vw] w-full mx-4 max-h-[95vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
@@ -253,7 +261,7 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
                   </div>
 
                   {/* Botón Salir */}
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <Button 
                       variant="destructive" 
                       className="w-full"
@@ -274,12 +282,17 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
                   Visualización Mágica
                 </h3>
                 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 relative">
                   <canvas
                     ref={canvasRef}
-                    width={600}
-                    height={400}
-                    className="border border-gray-200 rounded"
+                    width={800}
+                    height={500}
+                    className="border border-gray-200 rounded cursor-crosshair w-full"
+                  />
+                  {/* Container para tooltip */}
+                  <div 
+                    ref={containerTooltipRef}
+                    className="absolute inset-0 pointer-events-none"
                   />
                 </div>
               </Card>

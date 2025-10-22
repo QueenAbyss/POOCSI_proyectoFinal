@@ -54,7 +54,7 @@ export class EscenarioPropiedadesLinealidad extends Escenario {
   }
 
   // Configurar canvas y renderizadores
-  configurarCanvas(canvas, containerCalculos) {
+  configurarCanvas(canvas, containerCalculos, containerTooltip = null) {
     if (!canvas || !containerCalculos) {
       throw new Error("Canvas y container de cálculos son requeridos")
     }
@@ -73,7 +73,6 @@ export class EscenarioPropiedadesLinealidad extends Escenario {
       fin: 10       // Para compatibilidad
     }
     
-    // Debug removido para no saturar consola
     
     this.transformador = new TransformadorCoordenadas(
       this.configuracion,
@@ -89,6 +88,21 @@ export class EscenarioPropiedadesLinealidad extends Escenario {
     )
     
     this.renderizadorCalculos = new RenderizadorCalculosLinealidad(containerCalculos)
+    
+    // Configurar interacción (tooltip) - opcional
+    if (containerTooltip && this.renderizadorGrafico) {
+      try {
+        this.renderizadorGrafico.configurarInteraccion(
+          this.estado,
+          this.calculadora,
+          containerTooltip
+        )
+        console.log('✅ Tooltip configurado correctamente')
+      } catch (error) {
+        console.warn('⚠️ Error configurando tooltip:', error)
+        // Continuar sin tooltip
+      }
+    }
     
     // Actualizar gestor de visualización
     this.gestorVisualizacion.inicializar(

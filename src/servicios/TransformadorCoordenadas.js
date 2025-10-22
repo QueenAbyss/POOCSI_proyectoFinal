@@ -39,4 +39,16 @@ export class TransformadorCoordenadas {
   escalarAlto(alto) {
     return alto * this.escalas.escalaY
   }
+
+  // Actualizar intervalo X
+  actualizarIntervaloX(nuevoIntervaloX) {
+    this.intervaloX = nuevoIntervaloX
+    this.escalas = this.configuracion.calcularEscalas(this.intervaloX, this.intervaloY)
+  }
+
+  // Actualizar intervalo Y
+  actualizarIntervaloY(nuevoIntervaloY) {
+    this.intervaloY = nuevoIntervaloY
+    this.escalas = this.configuracion.calcularEscalas(this.intervaloX, this.intervaloY)
+  }
 }

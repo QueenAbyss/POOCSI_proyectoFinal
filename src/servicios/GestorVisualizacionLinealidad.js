@@ -148,8 +148,12 @@ export class GestorVisualizacionLinealidad {
     // Obtener cálculos actualizados
     const calculos = this.obtenerCalculos()
     
-    // Renderizar gráfico
-    this.renderizadorGrafico.renderizar(this.estado, calculos)
+    // Renderizar gráfico con actualización automática
+    if (this.renderizadorGrafico.actualizarGrafica) {
+      this.renderizadorGrafico.actualizarGrafica(this.estado, calculos)
+    } else {
+      this.renderizadorGrafico.renderizar(this.estado, calculos)
+    }
     
     // Renderizar cálculos
     this.renderizadorCalculos.renderizar(this.estado, calculos)

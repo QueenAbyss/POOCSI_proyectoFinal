@@ -9,6 +9,56 @@ export class RenderizadorGraficoLinealidad {
     this.ctx = canvas.getContext('2d')
     this.configuracion = configuracion
     this.transformador = transformador
+    
+    // Componentes de interacción
+    this.detectorHover = null
+    this.renderizadorTooltip = null
+    this.datosHover = null
+  }
+
+  // Configurar componentes de interacción
+  configurarInteraccion(estado, calculadora, containerTooltip) {
+    if (!containerTooltip) {
+      console.log('⚠️ Container de tooltip no disponible, saltando configuración de interacción')
+      return
+    }
+    
+    try {
+      // Importar dinámicamente para evitar dependencias circulares
+      import('../interaccion/DetectorHoverLinealidad.js').then(({ DetectorHoverLinealidad }) => {
+        this.detectorHover = new DetectorHoverLinealidad(this.canvas, this.transformador, estado, calculadora)
+        this.detectorHover.configurarCallbackHover((datosHover) => {
+          this.manejarCambioHover(datosHover)
+        })
+        console.log('✅ Detector de hover configurado')
+      }).catch(error => {
+        console.warn('⚠️ Error cargando detector de hover:', error)
+      })
+      
+      import('./RenderizadorTooltipLinealidad.js').then(({ RenderizadorTooltipLinealidad }) => {
+        this.renderizadorTooltip = new RenderizadorTooltipLinealidad(containerTooltip, this.configuracion)
+        console.log('✅ Renderizador de tooltip configurado')
+      }).catch(error => {
+        console.warn('⚠️ Error cargando renderizador de tooltip:', error)
+      })
+    } catch (error) {
+      console.warn('⚠️ Error configurando interacción:', error)
+    }
+  }
+
+  // Manejar cambio de hover
+  manejarCambioHover(datosHover) {
+    this.datosHover = datosHover
+    
+    if (datosHover && this.renderizadorTooltip) {
+      const posicion = {
+        x: datosHover.coordenadas.canvas.x,
+        y: datosHover.coordenadas.canvas.y
+      }
+      this.renderizadorTooltip.mostrarTooltip(datosHover, posicion)
+    } else if (this.renderizadorTooltip) {
+      this.renderizadorTooltip.ocultarTooltip()
+    }
   }
 
   // Renderizar el gráfico completo
@@ -19,6 +69,7 @@ export class RenderizadorGraficoLinealidad {
     this.renderizarFunciones(estado, calculos)
     this.renderizarLeyenda(estado)
     this.renderizarLímites(estado)
+    this.renderizarPuntoHover()
   }
 
   // Limpiar el canvas
@@ -235,6 +286,69 @@ export class RenderizadorGraficoLinealidad {
     this.ctx.setLineDash([])
   }
 
+  // Renderizar punto de hover
+  renderizarPuntoHover() {
+    if (!this.datosHover || !this.datosHover.activo) return
+    
+    const { coordenadas } = this.datosHover
+    const puntoCanvas = coordenadas.canvas
+    
+    // Dibujar punto de hover
+    this.ctx.save()
+    this.ctx.fillStyle = '#7c3aed'
+    this.ctx.strokeStyle = '#ffffff'
+    this.ctx.lineWidth = 2
+    this.ctx.beginPath()
+    this.ctx.arc(puntoCanvas.x, puntoCanvas.y, 6, 0, 2 * Math.PI)
+    this.ctx.fill()
+    this.ctx.stroke()
+    this.ctx.restore()
+    
+    // Dibujar líneas de referencia
+    this.renderizarLineasReferenciaHover(coordenadas)
+  }
+
+  // Renderizar líneas de referencia del hover
+  renderizarLineasReferenciaHover(coordenadas) {
+    const { ancho, alto, margen } = this.configuracion.grafico
+    
+    this.ctx.save()
+    this.ctx.strokeStyle = '#7c3aed'
+    this.ctx.lineWidth = 1
+    this.ctx.setLineDash([3, 3])
+    
+    // Línea vertical
+    this.ctx.beginPath()
+    this.ctx.moveTo(coordenadas.canvas.x, margen.superior)
+    this.ctx.lineTo(coordenadas.canvas.x, alto - margen.inferior)
+    this.ctx.stroke()
+    
+    // Línea horizontal
+    this.ctx.beginPath()
+    this.ctx.moveTo(margen.izquierdo, coordenadas.canvas.y)
+    this.ctx.lineTo(ancho - margen.derecho, coordenadas.canvas.y)
+    this.ctx.stroke()
+    
+    this.ctx.restore()
+  }
+
+  // Actualizar gráfica automáticamente
+  actualizarGrafica(estado, calculos) {
+    // Actualizar transformador si cambian los límites
+    if (this.transformador) {
+      const nuevoIntervaloX = { 
+        min: estado.limiteA, 
+        max: estado.limiteB,
+        inicio: estado.limiteA,
+        fin: estado.limiteB
+      }
+      this.transformador.actualizarIntervaloX(nuevoIntervaloX)
+    }
+    
+    // Re-renderizar
+    this.renderizar(estado, calculos)
+  }
+
   // Renderizar etiquetas de los ejes
   renderizarEtiquetasEjes() {
     const { ancho, alto, margen } = this.configuracion.grafico
@@ -270,6 +384,16 @@ export class RenderizadorGraficoLinealidad {
       const valorY = intervaloY.min + i * pasoY
       const puntoCanvas = this.transformador.matematicasACanvas(0, valorY)
       this.ctx.fillText(valorY.toFixed(1), margen.izquierdo - 5, puntoCanvas.y)
+    }
+  }
+
+  // Limpiar recursos
+  limpiar() {
+    if (this.detectorHover) {
+      this.detectorHover.limpiar()
+    }
+    if (this.renderizadorTooltip) {
+      this.renderizadorTooltip.limpiar()
     }
   }
 }
