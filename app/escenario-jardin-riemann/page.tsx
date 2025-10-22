@@ -50,6 +50,9 @@ export default function JardinRiemannPage() {
     if (propiedadSeleccionada === 'linealidad') {
       setMostrarLinealidad(true)
       setPropiedadSeleccionada(null)
+    } else if (propiedadSeleccionada === 'aditividad') {
+      // Redirigir a la página de aditividad
+      window.location.href = '/escenario-jardin-riemann/aditividad'
     }
   }, [propiedadSeleccionada])
 
@@ -930,9 +933,12 @@ export default function JardinRiemannPage() {
                 </div>
                 <Button 
                   className="w-full bg-green-500 hover:bg-green-600"
-                  disabled
+                  onClick={() => {
+                    setPropiedadSeleccionada('aditividad')
+                    setMostrarPropiedades(false)
+                  }}
                 >
-                  Próximamente
+                  Ver ejemplo interactivo
                 </Button>
               </Card>
 

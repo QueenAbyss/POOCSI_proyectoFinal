@@ -4,6 +4,7 @@
  * SRP: Solo maneja la navegación entre propiedades, no lógica de negocio
  */
 import { EscenarioPropiedadesLinealidad } from "../escenarios/EscenarioPropiedadesLinealidad.js"
+import { EscenarioPropiedadesAditividad } from "../escenarios/EscenarioPropiedadesAditividad.js"
 
 export class GestorPropiedadesMagicas {
   constructor() {
@@ -30,7 +31,7 @@ export class GestorPropiedadesMagicas {
         formula: "∫[a,c] f(x) dx = ∫[a,b] f(x) dx + ∫[b,c] f(x) dx",
         icono: "🏔️",
         color: "green",
-        disponible: false
+        disponible: true
       },
       inversionLimites: {
         id: "inversion-limites",
@@ -93,7 +94,7 @@ export class GestorPropiedadesMagicas {
       case "linealidad":
         return new EscenarioPropiedadesLinealidad()
       case "aditividad":
-        throw new Error("Escenario de aditividad no implementado aún")
+        return new EscenarioPropiedadesAditividad()
       case "inversion-limites":
         throw new Error("Escenario de inversión de límites no implementado aún")
       case "comparacion":

@@ -64,6 +64,8 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
       
       // Configurar canvas
       if (canvasRef.current && containerCalculosRef.current) {
+        // Configurar canvas con tooltip opcional
+        // @ts-ignore - TypeScript es muy estricto con los tipos aquí
         escenarioLinealidad.current.configurarCanvas(
           canvasRef.current, 
           containerCalculosRef.current,

@@ -1,0 +1,220 @@
+ANÁLISIS PARA IMPLEMENTACIÓN DE PROPIEDAD ADITIVIDAD
+=====================================================
+
+OBJETIVO: Crear una visualización interactiva de la propiedad de Aditividad de las integrales
+CONCEPTO: ∫[a,b] (f(x) + g(x)) dx = ∫[a,b] f(x) dx + ∫[a,b] g(x) dx
+
+PREGUNTAS ESPECÍFICAS PARA PROPIEDAD DE ADITIVIDAD
+==================================================
+
+1. INTERFAZ Y NAVEGACIÓN
+------------------------
+- ¿Cómo debe verse la interfaz cuando entramos a "Propiedades Mágicas" → "Aditividad"?
+- ¿Debe ser un modal similar a Linealidad o una página completa?
+- ¿Qué controles necesita el usuario? (sliders, dropdowns, inputs)
+- ¿Cómo se navega de vuelta al escenario principal?
+
+2. FUNCIONES MATEMÁTICAS
+------------------------
+- ¿Qué funciones f(x) y g(x) queremos mostrar por defecto?
+- ¿Debe el usuario poder cambiar las funciones desde dropdowns?
+- ¿Qué opciones de funciones son más educativas? (x², x³, sin(x), cos(x), etc.)
+- ¿Debe haber funciones predefinidas o permitir entrada libre?
+
+3. LÍMITES DE INTEGRACIÓN
+------------------------
+- ¿Qué límites [a,b] usar por defecto? (ej: [-2, 2], [0, 4])
+- ¿Debe el usuario poder cambiar los límites con sliders?
+- ¿Debe haber límites predefinidos o entrada libre?
+- ¿Cómo se muestran los límites en la gráfica?
+
+4. VISUALIZACIÓN GRÁFICA
+------------------------
+- ¿Cómo se dibujan las funciones f(x) y g(x) en la gráfica?
+- ¿Cómo se muestra la función suma (f(x) + g(x))?
+- ¿Se muestran las áreas bajo las curvas con colores diferentes?
+- ¿Se muestran rectángulos de Riemann para cada función?
+- ¿Cómo se representan las integrales calculadas?
+
+5. INTERACCIÓN CON EL MOUSE
+---------------------------
+- ¿Qué información muestra el tooltip al hacer hover?
+- ¿Debe mostrar valores de f(x), g(x), y (f+g)(x) en el punto hover?
+- ¿Debe mostrar las integrales calculadas en tiempo real?
+- ¿Cómo se posiciona el tooltip para no interferir con la gráfica?
+
+6. CÁLCULOS Y VERIFICACIÓN
+---------------------------
+- ¿Cómo se calculan las integrales de f(x), g(x) y (f+g)(x)?
+- ¿Se usa integración numérica o simbólica?
+- ¿Cómo se verifica que la aditividad se cumple?
+- ¿Qué tolerancia de error es aceptable?
+- ¿Se muestran los cálculos paso a paso?
+
+7. MÉTRICAS Y ESTADÍSTICAS
+---------------------------
+- ¿Qué métricas se deben mostrar? (error, precisión, tiempo)
+- ¿Se debe mostrar el porcentaje de precisión?
+- ¿Debe haber un indicador de "verificación exitosa"?
+- ¿Se deben guardar estadísticas del usuario?
+
+8. ANIMACIONES Y TRANSICIONES
+------------------------------
+- ¿Debe haber animaciones al cambiar funciones o límites?
+- ¿Cómo se anima la transición entre diferentes configuraciones?
+- ¿Debe haber una animación de "verificación" cuando se cumple la propiedad?
+- ¿Se animan los cálculos en tiempo real?
+
+9. CASOS ESPECIALES
+-------------------
+- ¿Qué pasa si las funciones no se pueden integrar analíticamente?
+- ¿Cómo se manejan funciones discontinuas?
+- ¿Qué pasa si los límites son iguales (a = b)?
+- ¿Se muestran casos donde la aditividad NO se cumple?
+
+10. COMPONENTES REACT NECESARIOS
+--------------------------------
+- ¿Qué componentes React necesitamos crear?
+- ¿Cómo se integra con el sistema OOP existente?
+- ¿Qué hooks de React se necesitan?
+- ¿Cómo se maneja el estado local vs el estado de las clases?
+
+11. INTEGRACIÓN CON ARQUITECTURA EXISTENTE
+------------------------------------------
+- ¿Cómo se integra con EscenarioPropiedadesLinealidad?
+- ¿Se crea un EscenarioPropiedadesAditividad similar?
+- ¿Qué clases del patrón Factory se necesitan?
+- ¿Cómo se reutiliza el TransformadorCoordenadas?
+
+12. CASOS DE USO EDUCATIVOS
+----------------------------
+- ¿Qué ejemplos son más educativos para estudiantes?
+- ¿Debe haber ejemplos paso a paso?
+- ¿Se debe mostrar la demostración matemática?
+- ¿Qué nivel de complejidad matemática es apropiado?
+
+13. MANEJO DE ERRORES
+---------------------
+- ¿Qué errores pueden ocurrir en los cálculos?
+- ¿Cómo se manejan funciones que no se pueden integrar?
+- ¿Qué pasa si los límites son inválidos?
+- ¿Cómo se muestran mensajes de error al usuario?
+
+14. RENDIMIENTO Y OPTIMIZACIÓN
+-------------------------------
+- ¿Cómo se optimiza el renderizado de múltiples funciones?
+- ¿Se debe limitar la frecuencia de recálculo?
+- ¿Cómo se maneja el rendimiento con funciones complejas?
+- ¿Se debe usar debouncing para los sliders?
+
+15. ACCESIBILIDAD Y UX
+-----------------------
+- ¿Cómo se hace accesible para usuarios con discapacidades?
+- ¿Qué colores son apropiados para daltonismo?
+- ¿Cómo se navega con teclado?
+- ¿Se necesitan tooltips de accesibilidad?
+
+PREGUNTAS ESPECÍFICAS SOBRE COMPORTAMIENTO
+==========================================
+
+A. COMPORTAMIENTO DE LA GRÁFICA
+- ¿La gráfica se actualiza en tiempo real al cambiar parámetros?
+- ¿Se muestran las tres funciones (f, g, f+g) simultáneamente?
+- ¿Se pueden ocultar/mostrar funciones individuales?
+- ¿Cómo se distinguen visualmente las diferentes funciones?
+
+B. COMPORTAMIENTO DE LOS CONTROLES
+- ¿Los sliders tienen valores mínimos/máximos?
+- ¿Se puede hacer zoom en la gráfica?
+- ¿Se puede arrastrar para cambiar los límites?
+- ¿Hay atajos de teclado para cambiar valores?
+
+C. COMPORTAMIENTO DEL TOOLTIP
+- ¿El tooltip sigue el mouse o se posiciona estáticamente?
+- ¿Se puede hacer click para "fijar" el tooltip?
+- ¿Se muestran múltiples valores simultáneamente?
+- ¿Se puede personalizar la información mostrada?
+
+D. COMPORTAMIENTO DE VERIFICACIÓN
+- ¿La verificación es automática o manual?
+- ¿Se muestra un indicador visual de éxito/fallo?
+- ¿Se puede exportar los resultados de la verificación?
+- ¿Se guarda el historial de verificaciones?
+
+E. COMPORTAMIENTO DE NAVEGACIÓN
+- ¿Se puede guardar el estado actual?
+- ¿Se puede volver a configuraciones anteriores?
+- ¿Hay un botón de "reset" para valores por defecto?
+- ¿Se puede compartir la configuración actual?
+
+CÓDIGO DE REFERENCIA (ADAPTAR A SRP)
+====================================
+
+// Ejemplo de componente React (adaptar a OOP)
+const AditividadDemo = () => {
+  const [funcionF, setFuncionF] = useState('x^2')
+  const [funcionG, setFuncionG] = useState('x')
+  const [limiteA, setLimiteA] = useState(-2)
+  const [limiteB, setLimiteB] = useState(2)
+  const [mostrarVerificacion, setMostrarVerificacion] = useState(false)
+  
+  // Adaptar a clases OOP:
+  // - EstadoAditividad
+  // - CalculadoraAditividad  
+  // - VerificadorAditividad
+  // - RenderizadorGraficoAditividad
+  // - GestorVisualizacionAditividad
+}
+
+// Ejemplo de comportamiento de tooltip
+const handleMouseMove = (event) => {
+  const rect = canvas.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  
+  // Convertir coordenadas del canvas a matemáticas
+  const xMath = transformadorCoordenadas.canvasAMatematicas(x, y).x
+  
+  // Calcular valores de funciones
+  const valorF = calcularFuncion(funcionF, xMath)
+  const valorG = calcularFuncion(funcionG, xMath)
+  const valorSuma = valorF + valorG
+  
+  // Mostrar tooltip con información
+  mostrarTooltip({
+    x: xMath,
+    f: valorF,
+    g: valorG,
+    suma: valorSuma
+  })
+}
+
+// Ejemplo de verificación de aditividad
+const verificarAditividad = () => {
+  const integralF = calcularIntegral(funcionF, limiteA, limiteB)
+  const integralG = calcularIntegral(funcionG, limiteA, limiteB)
+  const integralSuma = calcularIntegral(`${funcionF} + ${funcionG}`, limiteA, limiteB)
+  
+  const ladoIzquierdo = integralSuma
+  const ladoDerecho = integralF + integralG
+  const error = Math.abs(ladoIzquierdo - ladoDerecho)
+  
+  return {
+    cumple: error < 0.001,
+    error: error,
+    precision: (1 - error / Math.max(ladoIzquierdo, ladoDerecho)) * 100
+  }
+}
+
+NOTAS IMPORTANTES
+=================
+- Mantener el patrón SRP (Single Responsibility Principle)
+- Reutilizar clases existentes cuando sea posible
+- Seguir la arquitectura OOP establecida
+- Integrar con el sistema de tooltips existente
+- Mantener consistencia con LinealidadDemo
+- Considerar casos edge y manejo de errores
+- Optimizar para rendimiento con múltiples funciones
+- Hacer la interfaz intuitiva y educativa
+
+
