@@ -32,11 +32,34 @@ export class EscenarioComparacion {
 
         // Crear transformador de coordenadas
         const limites = this.estado.obtenerLimites()
+        const funciones = this.estado.obtenerFunciones()
+        
+        // Calcular rango X basado en los límites
+        const rangoX = Math.abs(limites.b - limites.a)
+        const margenX = rangoX * 0.1 // 10% de margen
         const intervaloX = {
-            min: Math.min(limites.a, limites.b) - 0.5,
-            max: Math.max(limites.a, limites.b) + 0.5
+            min: Math.min(limites.a, limites.b) - margenX,
+            max: Math.max(limites.a, limites.b) + margenX
         }
-        const intervaloY = { min: -0.5, max: 2 }
+        
+        // Calcular rango Y basado en las funciones
+        const calculadora = this.gestorVisualizacion.calculadora
+        const paso = (intervaloX.max - intervaloX.min) / 100
+        let maxY = 0
+        let minY = 0
+        
+        for (let x = intervaloX.min; x <= intervaloX.max; x += paso) {
+            const yF = calculadora.calcularValorFuncion(funciones.f, x)
+            const yG = calculadora.calcularValorFuncion(funciones.g, x)
+            maxY = Math.max(maxY, yF, yG)
+            minY = Math.min(minY, yF, yG)
+        }
+        
+        const margenY = (maxY - minY) * 0.1 // 10% de margen
+        const intervaloY = { 
+            min: Math.max(minY - margenY, -2), // No ir muy abajo
+            max: maxY + margenY 
+        }
 
         this.transformador = new TransformadorCoordenadas(
             this.configuracion,

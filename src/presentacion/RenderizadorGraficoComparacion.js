@@ -24,6 +24,9 @@ export class RenderizadorGraficoComparacion {
         const renderizadorEjes = new RenderizadorEjes(this.configuracion, transformador)
         renderizadorEjes.renderizar(ctx)
 
+        // Dibujar números en los ejes
+        this.dibujarNumerosEjes(ctx, transformador)
+
         // Dibujar áreas bajo las curvas
         this.dibujarAreas(ctx, datosGrafico, transformador)
 
@@ -172,6 +175,39 @@ export class RenderizadorGraficoComparacion {
             ctx.fillStyle = this.colores.texto
             ctx.fillText(item.texto, x + 15, itemY)
         })
+        ctx.restore()
+    }
+
+    // Dibujar números en los ejes
+    dibujarNumerosEjes(ctx, transformador) {
+        const area = this.configuracion.obtenerAreaDibujo()
+        const intervaloX = transformador.intervaloX
+        const intervaloY = transformador.intervaloY
+
+        ctx.save()
+        ctx.font = '10px Arial'
+        ctx.fillStyle = this.colores.texto
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+
+        // Números en el eje X
+        const pasoX = (intervaloX.max - intervaloX.min) / 8
+        for (let i = 0; i <= 8; i++) {
+            const x = intervaloX.min + i * pasoX
+            const pos = transformador.matematicasACanvas(x, 0)
+            ctx.fillText(x.toFixed(1), pos.x, area.y + area.alto + 5)
+        }
+
+        // Números en el eje Y
+        ctx.textAlign = 'right'
+        ctx.textBaseline = 'middle'
+        const pasoY = (intervaloY.max - intervaloY.min) / 6
+        for (let i = 0; i <= 6; i++) {
+            const y = intervaloY.min + i * pasoY
+            const pos = transformador.matematicasACanvas(0, y)
+            ctx.fillText(y.toFixed(1), area.x - 5, pos.y)
+        }
+
         ctx.restore()
     }
 }

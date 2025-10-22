@@ -194,7 +194,7 @@ export class GestorVisualizacionComparacion {
         const canvasPointF = transformador.matematicasACanvas(punto.x, punto.yF)
         const canvasPointG = transformador.matematicasACanvas(punto.x, punto.yG)
 
-        // Configurar tooltip
+        // Configurar tooltip con formato mejorado
         const tooltipText = [
             `${punto.x.toFixed(2)}`,
             `f(x): ${punto.yF.toFixed(2)}`,
@@ -213,11 +213,11 @@ export class GestorVisualizacionComparacion {
         const tooltipHeight = tooltipText.length * lineHeight + padding * 2
 
         // Posición del tooltip (evitar que se salga del canvas)
-        let tooltipX = canvasPointF.x + 10
+        let tooltipX = canvasPointF.x + 15
         let tooltipY = canvasPointF.y - tooltipHeight / 2
 
         if (tooltipX + tooltipWidth > canvas.width) {
-            tooltipX = canvasPointF.x - tooltipWidth - 10
+            tooltipX = canvasPointF.x - tooltipWidth - 15
         }
         if (tooltipY < 0) {
             tooltipY = 10
@@ -226,19 +226,27 @@ export class GestorVisualizacionComparacion {
             tooltipY = canvas.height - tooltipHeight - 10
         }
 
-        // Dibujar fondo del tooltip
-        ctx.fillStyle = this.configuracion.obtenerTooltip().backgroundColor
+        // Dibujar fondo del tooltip con bordes redondeados
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
         ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
 
         // Dibujar borde del tooltip
-        ctx.strokeStyle = this.configuracion.obtenerTooltip().borderColor
+        ctx.strokeStyle = '#666666'
         ctx.lineWidth = 1
         ctx.strokeRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
 
-        // Dibujar texto del tooltip
-        ctx.fillStyle = this.configuracion.obtenerTooltip().textColor
+        // Dibujar texto del tooltip con colores
+        ctx.fillStyle = '#FFFFFF'
         tooltipText.forEach((line, index) => {
-            ctx.fillText(line, tooltipX + padding, tooltipY + padding + (index + 1) * lineHeight)
+            if (index === 0) {
+                // Coordenada x en negrita
+                ctx.font = `bold ${fontSize}px Arial`
+                ctx.fillText(line, tooltipX + padding, tooltipY + padding + (index + 1) * lineHeight)
+            } else {
+                // Valores de las funciones
+                ctx.font = `${fontSize}px Arial`
+                ctx.fillText(line, tooltipX + padding, tooltipY + padding + (index + 1) * lineHeight)
+            }
         })
 
         ctx.restore()
