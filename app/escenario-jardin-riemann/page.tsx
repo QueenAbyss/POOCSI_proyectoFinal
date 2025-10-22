@@ -56,6 +56,9 @@ export default function JardinRiemannPage() {
     } else if (propiedadSeleccionada === 'inversion') {
       // Redirigir a la página de inversión de límites
       window.location.href = '/escenario-jardin-riemann/inversion-limites'
+    } else if (propiedadSeleccionada === 'comparacion') {
+      // Redirigir a la página de comparación
+      window.location.href = '/escenario-jardin-riemann/comparacion'
     }
   }, [propiedadSeleccionada])
 
@@ -990,9 +993,12 @@ export default function JardinRiemannPage() {
                 </div>
                 <Button 
                   className="w-full bg-purple-500 hover:bg-purple-600"
-                  disabled
+                  onClick={() => {
+                    setPropiedadSeleccionada('comparacion')
+                    setMostrarPropiedades(false)
+                  }}
                 >
-                  Próximamente
+                  Ver ejemplo interactivo
                 </Button>
               </Card>
             </div>
