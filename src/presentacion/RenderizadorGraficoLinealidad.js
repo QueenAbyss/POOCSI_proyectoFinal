@@ -19,7 +19,6 @@ export class RenderizadorGraficoLinealidad {
   // Configurar componentes de interacción
   configurarInteraccion(estado, calculadora, containerTooltip) {
     if (!containerTooltip) {
-      console.log('⚠️ Container de tooltip no disponible, saltando configuración de interacción')
       return
     }
     
@@ -30,19 +29,15 @@ export class RenderizadorGraficoLinealidad {
         this.detectorHover.configurarCallbackHover((datosHover) => {
           this.manejarCambioHover(datosHover)
         })
-        console.log('✅ Detector de hover configurado')
       }).catch(error => {
-        console.warn('⚠️ Error cargando detector de hover:', error)
       })
       
       import('./RenderizadorTooltipLinealidad.js').then(({ RenderizadorTooltipLinealidad }) => {
         this.renderizadorTooltip = new RenderizadorTooltipLinealidad(containerTooltip, this.configuracion)
-        console.log('✅ Renderizador de tooltip configurado')
       }).catch(error => {
-        console.warn('⚠️ Error cargando renderizador de tooltip:', error)
       })
     } catch (error) {
-      console.warn('⚠️ Error configurando interacción:', error)
+      // Error configurando interacción
     }
   }
 
@@ -362,7 +357,6 @@ export class RenderizadorGraficoLinealidad {
     const intervaloY = this.transformador.intervaloY
     
     if (!intervaloX || !intervaloY) {
-      console.log('❌ Intervalos no disponibles para etiquetas')
       return
     }
     

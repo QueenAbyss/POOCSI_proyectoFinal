@@ -5,7 +5,6 @@
  */
 export class ConfiguracionLinealidad {
   constructor() {
-    console.log('🚀 ConfiguracionLinealidad NUEVA VERSION cargada')
     // Configuración de sliders
     this.sliders = {
       alpha: {
@@ -116,7 +115,6 @@ export class ConfiguracionLinealidad {
 
   // Método requerido por TransformadorCoordenadas - ACTUALIZADO
   obtenerAreaDibujo() {
-    console.log('ConfiguracionLinealidad.obtenerAreaDibujo() llamado')
     const { ancho, alto, margen } = this.grafico
     return {
       x: margen.izquierdo,

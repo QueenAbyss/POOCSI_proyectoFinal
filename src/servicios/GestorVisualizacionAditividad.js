@@ -210,14 +210,10 @@ export class GestorVisualizacionAditividad {
             transformador
         )
         
-        // Renderizar tooltip si hay punto hover
+        // ✅ RENDERIZAR TOOLTIP DIRECTAMENTE EN EL CANVAS
         const puntoHover = this.estado.obtenerPuntoHover()
-        if (puntoHover && containerTooltip) {
-            this.renderizadorTooltip.renderizar(
-                containerTooltip,
-                puntoHover,
-                this.estado.obtenerFuncionSeleccionada()
-            )
+        if (puntoHover) {
+            this.renderizarTooltipEnCanvas(ctx, puntoHover, this.estado.obtenerFuncionSeleccionada())
         }
         
         console.log('GestorVisualizacionAditividad - Renderizado completo')
@@ -247,6 +243,84 @@ export class GestorVisualizacionAditividad {
             }
             
         }, 100)
+    }
+    
+    // ✅ RENDERIZAR TOOLTIP DIRECTAMENTE EN EL CANVAS
+    renderizarTooltipEnCanvas(ctx, puntoHover, funcion) {
+        const x = puntoHover.coordenadasCanvas.x
+        const y = puntoHover.coordenadasCanvas.y
+        
+        // Información del intervalo
+        const informacionIntervalo = this.obtenerInformacionIntervalo(puntoHover.intervalo)
+        
+        // Configurar estilo del tooltip
+        ctx.save()
+        ctx.fillStyle = 'rgba(31, 41, 55, 0.95)' // bg-gray-800 con transparencia
+        ctx.strokeStyle = '#374151'
+        ctx.lineWidth = 1
+        
+        // Dimensiones del tooltip
+        const padding = 12
+        const lineHeight = 16
+        const lines = [
+            `x = ${puntoHover.x.toFixed(2)}`,
+            `f(x) = ${puntoHover.valorFuncion.toFixed(3)}`,
+            `Intervalo: [${puntoHover.intervalo.inicio}, ${puntoHover.intervalo.fin}]`
+        ]
+        
+        const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width))
+        const tooltipWidth = maxWidth + (padding * 2)
+        const tooltipHeight = (lines.length * lineHeight) + (padding * 2)
+        
+        // Posición del tooltip (evitar que se salga del canvas)
+        let tooltipX = x + 10
+        let tooltipY = y - 10
+        
+        if (tooltipX + tooltipWidth > ctx.canvas.width) {
+            tooltipX = x - tooltipWidth - 10
+        }
+        if (tooltipY < 0) {
+            tooltipY = y + 10
+        }
+        
+        // Dibujar fondo del tooltip
+        ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
+        ctx.strokeRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
+        
+        // Dibujar texto
+        ctx.fillStyle = '#f9fafb' // text-white
+        ctx.font = '11px Arial'
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'top'
+        
+        lines.forEach((line, index) => {
+            const textY = tooltipY + padding + (index * lineHeight)
+            ctx.fillText(line, tooltipX + padding, textY)
+        })
+        
+        ctx.restore()
+    }
+    
+    // ✅ OBTENER INFORMACIÓN DEL INTERVALO
+    obtenerInformacionIntervalo(intervalo) {
+        const colores = this.configuracion.obtenerColores()
+        
+        if (intervalo.nombre === 'AB') {
+            return {
+                color: colores.areaAB,
+                nombre: `[${intervalo.inicio}, ${intervalo.fin}]`
+            }
+        } else if (intervalo.nombre === 'BC') {
+            return {
+                color: colores.areaBC,
+                nombre: `[${intervalo.inicio}, ${intervalo.fin}]`
+            }
+        }
+        
+        return {
+            color: '#6b7280',
+            nombre: `[${intervalo.inicio}, ${intervalo.fin}]`
+        }
     }
     
     // Renderizar cálculos

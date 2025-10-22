@@ -100,7 +100,8 @@ export class EscenarioPropiedadesAditividad {
     manejarHover(evento, canvas, transformador) {
         if (this.gestorVisualizacion && this.transformador) {
             const puntoHover = this.gestorVisualizacion.manejarHover(evento, canvas, this.transformador)
-            this.renderizar()
+            // ✅ NO RENDERIZAR INMEDIATAMENTE - Solo actualizar el estado del hover
+            // El renderizado se manejará automáticamente por el GestorVisualizacionAditividad
             return puntoHover
         }
         return null
@@ -109,7 +110,8 @@ export class EscenarioPropiedadesAditividad {
     // Limpiar hover (para React)
     limpiarHover() {
         this.estado.establecerPuntoHover(null)
-        this.renderizar()
+        // ✅ NO RENDERIZAR INMEDIATAMENTE - Solo limpiar el estado del hover
+        // El renderizado se manejará automáticamente por el GestorVisualizacionAditividad
     }
     
     // Establecer estado (para React)

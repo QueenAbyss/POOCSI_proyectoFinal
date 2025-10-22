@@ -97,9 +97,7 @@ export class EscenarioPropiedadesLinealidad extends Escenario {
           this.calculadora,
           containerTooltip
         )
-        console.log('✅ Tooltip configurado correctamente')
       } catch (error) {
-        console.warn('⚠️ Error configurando tooltip:', error)
         // Continuar sin tooltip
       }
     }

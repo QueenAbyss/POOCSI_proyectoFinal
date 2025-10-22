@@ -333,53 +333,58 @@ export class RenderizadorGraficoAditividad {
         ctx.strokeStyle = '#000000'
         ctx.lineWidth = 1
         ctx.fillStyle = '#000000'
-        ctx.font = '12px Arial'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'top'
+        ctx.font = '11px Arial'
         
-        // Eje X
+        // Eje X (línea horizontal)
         ctx.beginPath()
         ctx.moveTo(area.x, area.y + area.alto)
         ctx.lineTo(area.x + area.ancho, area.y + area.alto)
         ctx.stroke()
         
-        // Eje Y
+        // Eje Y (línea vertical)
         ctx.beginPath()
         ctx.moveTo(area.x, area.y)
         ctx.lineTo(area.x, area.y + area.alto)
         ctx.stroke()
         
-        // Numeración del eje X
-        const pasoX = (intervaloX.max - intervaloX.min) / 8
-        for (let i = 0; i <= 8; i++) {
+        // ✅ NUMERACIÓN DEL EJE X - Mejorada
+        const numMarcasX = 5 // Reducir número de marcas para mejor legibilidad
+        const pasoX = (intervaloX.max - intervaloX.min) / (numMarcasX - 1)
+        
+        for (let i = 0; i < numMarcasX; i++) {
             const valorX = intervaloX.min + (i * pasoX)
-            const canvasX = area.x + (i * area.ancho / 8)
+            const canvasX = area.x + (i * area.ancho / (numMarcasX - 1))
             
-            // Línea de marca
+            // Línea de marca en el eje X
             ctx.beginPath()
             ctx.moveTo(canvasX, area.y + area.alto)
-            ctx.lineTo(canvasX, area.y + area.alto + 5)
+            ctx.lineTo(canvasX, area.y + area.alto + 4)
             ctx.stroke()
             
-            // Número
-            ctx.fillText(valorX.toFixed(1), canvasX, area.y + area.alto + 8)
+            // Número del eje X
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'top'
+            ctx.fillText(valorX.toFixed(1), canvasX, area.y + area.alto + 6)
         }
         
-        // Numeración del eje Y
-        const pasoY = (intervaloY.max - intervaloY.min) / 8
-        for (let i = 0; i <= 8; i++) {
+        // ✅ NUMERACIÓN DEL EJE Y - Mejorada
+        const numMarcasY = 5 // Reducir número de marcas para mejor legibilidad
+        const pasoY = (intervaloY.max - intervaloY.min) / (numMarcasY - 1)
+        
+        for (let i = 0; i < numMarcasY; i++) {
             const valorY = intervaloY.min + (i * pasoY)
-            const canvasY = area.y + area.alto - (i * area.alto / 8)
+            const canvasY = area.y + area.alto - (i * area.alto / (numMarcasY - 1))
             
-            // Línea de marca
+            // Línea de marca en el eje Y
             ctx.beginPath()
-            ctx.moveTo(area.x - 5, canvasY)
+            ctx.moveTo(area.x - 4, canvasY)
             ctx.lineTo(area.x, canvasY)
             ctx.stroke()
             
-            // Número
+            // Número del eje Y
             ctx.textAlign = 'right'
-            ctx.fillText(valorY.toFixed(1), area.x - 8, canvasY - 6)
+            ctx.textBaseline = 'middle'
+            ctx.fillText(valorY.toFixed(1), area.x - 6, canvasY)
         }
         
         ctx.restore()

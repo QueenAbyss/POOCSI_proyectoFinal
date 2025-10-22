@@ -90,7 +90,7 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
         renderizar()
       }
     } catch (error) {
-      console.error('Error al inicializar linealidad:', error)
+      // Error al inicializar linealidad
     }
   }, [])
 
@@ -128,11 +128,7 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
 
   const renderizar = () => {
     if (gestorVisualizacion.current) {
-      console.log('🎨 Renderizando linealidad...')
       gestorVisualizacion.current.renderizar()
-      console.log('✅ Renderizado completado')
-    } else {
-      console.log('❌ GestorVisualizacion no disponible')
     }
   }
 
