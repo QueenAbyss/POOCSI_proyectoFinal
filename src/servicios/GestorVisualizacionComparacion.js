@@ -172,9 +172,6 @@ export class GestorVisualizacionComparacion {
         // Crear un punto de hover con ambas funciones
         this.estado.establecerPuntoHover({ x, yF, yG })
 
-        // Renderizar tooltip
-        this.renderizarTooltipEnCanvas(canvas, { x, yF, yG }, funciones)
-
         this.renderizar()
     }
 

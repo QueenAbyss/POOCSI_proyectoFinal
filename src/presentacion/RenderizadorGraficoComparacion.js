@@ -36,6 +36,8 @@ export class RenderizadorGraficoComparacion {
         // Dibujar punto hover si existe
         if (puntoHover) {
             this.dibujarPuntoHover(ctx, puntoHover, transformador)
+            // Dibujar tooltip
+            this.dibujarTooltip(ctx, puntoHover, transformador)
         }
 
         // Dibujar leyenda
@@ -131,25 +133,15 @@ export class RenderizadorGraficoComparacion {
         const pos = transformador.matematicasACanvas(punto.x, punto.yF)
         const posG = transformador.matematicasACanvas(punto.x, punto.yG)
 
-        // Línea vertical
-        ctx.strokeStyle = this.colores.hover
-        ctx.lineWidth = 2
-        ctx.setLineDash([5, 5])
-        ctx.beginPath()
-        ctx.moveTo(pos.x, 0)
-        ctx.lineTo(pos.x, ctx.canvas.height)
-        ctx.stroke()
-        ctx.setLineDash([])
-
-        // Puntos en las funciones
+        // Puntos en las funciones (más grandes para mejor visibilidad)
         ctx.fillStyle = this.colores.funcionF
         ctx.beginPath()
-        ctx.arc(pos.x, pos.y, this.grafico.radioPunto, 0, 2 * Math.PI)
+        ctx.arc(pos.x, pos.y, this.grafico.radioPunto + 2, 0, 2 * Math.PI)
         ctx.fill()
 
         ctx.fillStyle = this.colores.funcionG
         ctx.beginPath()
-        ctx.arc(posG.x, posG.y, this.grafico.radioPunto, 0, 2 * Math.PI)
+        ctx.arc(posG.x, posG.y, this.grafico.radioPunto + 2, 0, 2 * Math.PI)
         ctx.fill()
     }
 
@@ -207,6 +199,27 @@ export class RenderizadorGraficoComparacion {
             const pos = transformador.matematicasACanvas(0, y)
             ctx.fillText(y.toFixed(1), area.x - 5, pos.y)
         }
+
+        ctx.restore()
+    }
+
+    // Dibujar tooltip
+    dibujarTooltip(ctx, punto, transformador) {
+        const canvasPointF = transformador.matematicasACanvas(punto.x, punto.yF)
+
+        // Solo texto, sin ningún fondo
+        ctx.save()
+        ctx.font = '11px Arial'
+        ctx.fillStyle = '#000000'
+
+        // Posición simple a la derecha del punto
+        const tooltipX = canvasPointF.x + 15
+        const tooltipY = canvasPointF.y
+
+        // Dibujar solo el texto, línea por línea
+        ctx.fillText(`${punto.x.toFixed(2)}`, tooltipX, tooltipY - 10)
+        ctx.fillText(`f(x): ${punto.yF.toFixed(2)}`, tooltipX, tooltipY)
+        ctx.fillText(`g(x): ${punto.yG.toFixed(2)}`, tooltipX, tooltipY + 10)
 
         ctx.restore()
     }
