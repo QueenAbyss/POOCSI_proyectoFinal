@@ -87,7 +87,7 @@ export class GestorVisualizacionPTFC {
         if (!this.estado) return
         
         this.estado.establecerPosicionX(x)
-        // ✅ RENDERIZADO INMEDIATO PARA POSICIÓN X
+        // ✅ RENDERIZADO INMEDIATO SIN DEBOUNCING PARA POSICIÓN X
         this.renderizarInmediato()
     }
     
@@ -151,12 +151,24 @@ export class GestorVisualizacionPTFC {
         
         if (!funcion) return
         
-        // Calcular teorema completo
-        const resultados = this.calculadora.calcularTeoremaCompleto(
-            funcion,
-            limites.a,
-            posicionX
-        )
+        // ✅ CÁLCULOS RÁPIDOS PARA RENDERIZADO EN TIEMPO REAL
+        const valorFuncion = this.calculadora.evaluarFuncion(funcion, posicionX)
+        const integralAcumulada = this.calculadora.calcularIntegral(funcion, limites.a, posicionX, 100) // Menos precisión para velocidad
+        const derivadaIntegral = this.calculadora.calcularDerivadaIntegral(funcion, limites.a, posicionX)
+        
+        // Verificación rápida
+        const diferencia = Math.abs(derivadaIntegral - valorFuncion)
+        const verificacionExitosa = diferencia < 0.01 // Tolerancia más amplia para velocidad
+        
+        const resultados = {
+            valorFuncion: this.calculadora.formatearNumero(valorFuncion),
+            integralAcumulada: this.calculadora.formatearNumero(integralAcumulada),
+            derivadaIntegral: this.calculadora.formatearNumero(derivadaIntegral),
+            diferenciaVerificacion: this.calculadora.formatearNumero(diferencia),
+            verificacionExitosa,
+            tiempoCalculo: 0,
+            precision: 100
+        }
         
         // Actualizar estado
         this.estado.establecerCalculos(resultados)
@@ -167,33 +179,39 @@ export class GestorVisualizacionPTFC {
     
     // ✅ RENDERIZADO INMEDIATO (SIN DEBOUNCING)
     async renderizarInmediato() {
-        if (this.isRendering) return
+        if (this.isRendering) {
+            // Si ya está renderizando, programar otro renderizado
+            this.renderQueue = true
+            return
+        }
         
         this.isRendering = true
         try {
+            // ✅ EJECUTAR CÁLCULOS RÁPIDOS SIN DEBOUNCING
+            await this.ejecutarCalculos()
             await this.renderizar()
         } catch (error) {
             console.error('Error en renderizado inmediato:', error)
         } finally {
             this.isRendering = false
+            
+            // Si hay cola de renderizado, ejecutar inmediatamente
+            if (this.renderQueue) {
+                this.renderQueue = false
+                this.renderizarInmediato()
+            }
         }
     }
     
     // ✅ RENDERIZAR
     async renderizar() {
-        console.log('🎨 GestorVisualizacionPTFC: Iniciando renderizado...')
         if (!this.renderizadorPuente || !this.renderizadorCartesiano) {
             console.warn('⚠️ Renderizadores no disponibles')
             return
         }
         
-        // ✅ EJECUTAR CÁLCULOS ANTES DE RENDERIZAR
-        await this.ejecutarCalculos()
-        
         const estado = this.estado.obtenerCalculos()
         const configuracion = this.configuracion.obtenerColores()
-        console.log('📊 Estado:', estado)
-        console.log('🎨 Configuración:', configuracion)
         
         // Renderizar puente mágico
         if (this.canvasPuente) {

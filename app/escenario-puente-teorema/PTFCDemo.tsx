@@ -104,6 +104,7 @@ export function PTFCDemo({ onBack }: PTFCDemoProps) {
   // ✅ MANEJAR CAMBIO DE POSICIÓN X
   const handlePosicionXChange = useCallback((x: number) => {
     setPosicionX(x)
+    // ✅ ACTUALIZACIÓN INMEDIATA SIN DEBOUNCING
     actualizarPosicionX(x)
   }, [actualizarPosicionX])
   
@@ -280,7 +281,7 @@ export function PTFCDemo({ onBack }: PTFCDemoProps) {
                         onValueChange={(value) => handlePosicionXChange(value[0])}
                         min={limiteA}
                         max={limiteB}
-                        step={0.01}
+                        step={0.001}
                         className="w-full"
                       />
                     </div>

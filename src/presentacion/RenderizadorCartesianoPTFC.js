@@ -426,7 +426,8 @@ export class RenderizadorCartesianoPTFC {
     // ✅ GENERAR PUNTOS DE LA FUNCIÓN
     generarPuntosFuncion(funcion, limites, transformador) {
         const puntos = []
-        const densidad = this.configuracion.visualizacion.cartesiana.densidadPuntos
+        // ✅ REDUCIR DENSIDAD PARA RENDERIZADO MÁS RÁPIDO
+        const densidad = Math.min(this.configuracion.visualizacion.cartesiana.densidadPuntos, 100)
         const paso = (limites.b - limites.a) / densidad
         
         for (let i = 0; i <= densidad; i++) {
@@ -442,7 +443,8 @@ export class RenderizadorCartesianoPTFC {
     // ✅ GENERAR PUNTOS DEL ÁREA
     generarPuntosArea(funcion, limites, posicionX, transformador) {
         const puntos = []
-        const densidad = 100
+        // ✅ REDUCIR DENSIDAD PARA RENDERIZADO MÁS RÁPIDO
+        const densidad = 50
         const paso = (posicionX - limites.a) / densidad
         
         for (let i = 0; i <= densidad; i++) {

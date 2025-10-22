@@ -255,7 +255,8 @@ export class RenderizadorPuenteMagico {
     // ✅ GENERAR PUNTOS DEL PUENTE
     generarPuntosPuente(funcion, limites, transformador) {
         const puntos = []
-        const densidad = 200
+        // ✅ REDUCIR DENSIDAD PARA RENDERIZADO MÁS RÁPIDO
+        const densidad = 100
         const paso = (limites.b - limites.a) / densidad
         
         for (let i = 0; i <= densidad; i++) {
@@ -271,7 +272,8 @@ export class RenderizadorPuenteMagico {
     // ✅ GENERAR PUNTOS DEL ÁREA
     generarPuntosArea(funcion, limites, posicionX, transformador) {
         const puntos = []
-        const densidad = 100
+        // ✅ REDUCIR DENSIDAD PARA RENDERIZADO MÁS RÁPIDO
+        const densidad = 50
         const paso = (posicionX - limites.a) / densidad
         
         for (let i = 0; i <= densidad; i++) {
