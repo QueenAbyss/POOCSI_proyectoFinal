@@ -16,7 +16,7 @@ SERVICIOS ACTIVAMENTE USADOS:
 
 2. **Otros Escenarios** (USADOS):
    - CalculadoraTVM ✅ (escenario-torre-valor-medio)
-   - CalculadoraTFC ✅ (escenario-puente-teorema)
+   - CalculadoraPTFC ✅ (escenario-puente-teorema) - NUEVA IMPLEMENTACIÓN
    - CalculadoraAntiderivadas ✅ (escenario-cristal-antiderivadas)
 
 3. **Página Principal** (USADO):
@@ -36,7 +36,7 @@ SERVICIOS NO USADOS (POTENCIALES PARA PROPIEDADES):
 
 2. **Servicios de Otros Escenarios** (NO USADOS en JardinRiemann):
    - CalculadoraTVM.js ❌
-   - CalculadoraTFC.js ❌
+   - CalculadoraTFC.js ❌ (ELIMINADO - REEMPLAZADO POR CalculadoraPTFC.js)
    - CalculadoraAntiderivadas.js ❌
 
 RECOMENDACIONES PARA PROPIEDADES MÁGICAS:

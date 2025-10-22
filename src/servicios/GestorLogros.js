@@ -11,6 +11,7 @@ export class GestorLogros {
 
   inicializarLogros() {
     return [
+      // ✅ LOGROS DE RIEMANN (Jardín Mágico)
       new Logro(
         "primer-exito",
         "Primer Éxito",
@@ -45,6 +46,64 @@ export class GestorLogros {
         "Logra excelencia con menos de 50 macetas",
         "💎",
         (datos) => datos.errorAbsoluto < 0.1 && datos.macetas < 50,
+      ),
+      
+      // ✅ LOGROS DE PTFC (Puente Mágico)
+      new Logro(
+        "explorador-ptfc",
+        "🧭 Explorador del Puente",
+        "Primera exploración del puente mágico",
+        "🧭",
+        (datos) => datos.posicionX > datos.limiteA + 0.1,
+      ),
+      new Logro(
+        "maestro-teorema-ptfc",
+        "🎓 Maestro del Teorema",
+        "Verificaste F'(x) = f(x) correctamente",
+        "🎓",
+        (datos) => datos.verificacionTeorema,
+      ),
+      new Logro(
+        "animador-ptfc",
+        "🎬 Animador del Puente",
+        "Completaste una animación completa",
+        "🎬",
+        (datos) => datos.posicionX >= datos.limiteB - 0.1,
+      ),
+      new Logro(
+        "explorador-funciones-ptfc",
+        "🔬 Explorador de Funciones",
+        "Exploraste múltiples funciones matemáticas",
+        "🔬",
+        (datos) => datos.funcionesExploradas > 1,
+      ),
+      new Logro(
+        "verificador-precision-ptfc",
+        "🎯 Verificador de Precisión",
+        "Lograste una verificación con diferencia < 0.001",
+        "🎯",
+        (datos) => datos.diferenciaVerificacion < 0.001,
+      ),
+      new Logro(
+        "constructor-puente-ptfc",
+        "🏗️ Constructor del Puente",
+        "Construiste el puente completo con área > 10",
+        "🏗️",
+        (datos) => datos.integralAcumulada > 10,
+      ),
+      new Logro(
+        "matematico-avanzado-ptfc",
+        "🧮 Matemático Avanzado",
+        "Verificaste el teorema en 5 funciones diferentes",
+        "🧮",
+        (datos) => datos.verificacionesExitosas >= 5,
+      ),
+      new Logro(
+        "explorador-tiempo-ptfc",
+        "⏱️ Explorador del Tiempo",
+        "Exploraste por más de 2 minutos",
+        "⏱️",
+        (datos) => datos.tiempoExploracion > 120000, // 2 minutos en ms
       ),
     ]
   }
@@ -82,5 +141,39 @@ export class GestorLogros {
       logro.desbloqueado = false
       logro.fechaDesbloqueo = null
     })
+  }
+  
+  // ✅ OBTENER LOGROS POR ESCENARIO
+  obtenerLogrosPorEscenario(escenario) {
+    if (escenario === 'riemann') {
+      return this.logros.filter(logro => 
+        !logro.id.includes('-ptfc') && !logro.id.includes('-tvm') && !logro.id.includes('-antiderivadas')
+      )
+    } else if (escenario === 'ptfc') {
+      return this.logros.filter(logro => logro.id.includes('-ptfc'))
+    } else if (escenario === 'tvm') {
+      return this.logros.filter(logro => logro.id.includes('-tvm'))
+    } else if (escenario === 'antiderivadas') {
+      return this.logros.filter(logro => logro.id.includes('-antiderivadas'))
+    }
+    return this.logros
+  }
+  
+  // ✅ OBTENER LOGROS DESBLOQUEADOS POR ESCENARIO
+  obtenerLogrosDesbloqueadosPorEscenario(escenario) {
+    return this.obtenerLogrosPorEscenario(escenario).filter(logro => logro.desbloqueado)
+  }
+  
+  // ✅ OBTENER PROGRESO POR ESCENARIO
+  obtenerProgresoPorEscenario(escenario) {
+    const logrosEscenario = this.obtenerLogrosPorEscenario(escenario)
+    const total = logrosEscenario.length
+    const desbloqueados = logrosEscenario.filter(logro => logro.desbloqueado).length
+    
+    return {
+      total,
+      desbloqueados,
+      porcentaje: total > 0 ? (desbloqueados / total) * 100 : 0,
+    }
   }
 }

@@ -3,11 +3,34 @@
  * RESPONSABILIDAD: Convertir entre coordenadas matemáticas y canvas
  */
 export class TransformadorCoordenadas {
-  constructor(configuracion, intervaloX, intervaloY) {
+  constructor(configuracion, intervaloX, intervaloY, area = null) {
     this.configuracion = configuracion
     this.intervaloX = intervaloX
     this.intervaloY = intervaloY
-    this.area = configuracion.obtenerAreaDibujo()
+    
+    // ✅ OBTENER ÁREA DE DIBUJO DE FORMA COMPATIBLE
+    if (area) {
+      this.area = area
+    } else if (configuracion.obtenerAreaDibujo) {
+      this.area = configuracion.obtenerAreaDibujo()
+    } else if (configuracion.obtenerConfiguracionVisualizacion) {
+      const visualizacion = configuracion.obtenerConfiguracionVisualizacion()
+      this.area = {
+        x: visualizacion.cartesiana.margen,
+        y: visualizacion.cartesiana.margen,
+        ancho: visualizacion.cartesiana.ancho - 2 * visualizacion.cartesiana.margen,
+        alto: visualizacion.cartesiana.alto - 2 * visualizacion.cartesiana.margen
+      }
+    } else {
+      // ✅ ÁREA POR DEFECTO
+      this.area = {
+        x: 40,
+        y: 40,
+        ancho: 720,
+        alto: 320
+      }
+    }
+    
     this.escalas = this.calcularEscalas(intervaloX, intervaloY)
   }
 
