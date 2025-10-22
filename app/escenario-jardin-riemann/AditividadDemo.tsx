@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Sparkles, Wand2, Divide } from 'lucide-react'
-import { EscenarioPropiedadesAditividad } from '@/src/escenarios/EscenarioPropiedadesAditividad.js'
+import { EscenarioFactory } from '@/src/escenarios/EscenarioFactory.js'
 import { useAditividadState } from '@/src/hooks/useAditividadState'
 
 interface AditividadDemoProps {
@@ -24,7 +24,8 @@ export function AditividadDemo({ onBack }: AditividadDemoProps) {
   // ✅ REFERENCIAS
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerTooltipRef = useRef<HTMLDivElement>(null)
-  const escenarioAditividad = useRef<EscenarioPropiedadesAditividad | null>(null)
+  const escenarioFactory = useRef<any>(null)
+  const escenarioAditividad = useRef<any>(null)
   
   // ✅ HOOK PERSONALIZADO PARA SINCRONIZACIÓN
   const { estado, configuracion, actualizarEstado, actualizarConfiguracion, sincronizarConReact } = useAditividadState()
@@ -52,8 +53,9 @@ export function AditividadDemo({ onBack }: AditividadDemoProps) {
   useEffect(() => {
     if (canvasRef.current && !escenarioAditividad.current) {
       try {
-        // ✅ CREAR INSTANCIAS DE CLASES OOP
-        escenarioAditividad.current = new EscenarioPropiedadesAditividad()
+        // ✅ CREAR INSTANCIAS DE CLASES OOP USANDO FACTORY
+        escenarioFactory.current = new EscenarioFactory()
+        escenarioAditividad.current = escenarioFactory.current.crearEscenario('propiedades-aditividad')
         
         // ✅ CONFIGURAR CANVAS PARA REACT
         console.log('AditividadDemo - Canvas element:', canvasRef.current)

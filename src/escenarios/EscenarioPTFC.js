@@ -3,6 +3,7 @@
  * RESPONSABILIDAD: Solo coordinación general del Primer Teorema Fundamental del Cálculo
  * SRP: Solo coordinación, no implementación de lógica ni presentación
  */
+import { Escenario } from './Escenario.js'
 import { EstadoPTFC } from '../entidades/EstadoPTFC.js'
 import { ConfiguracionPTFC } from '../entidades/ConfiguracionPTFC.js'
 import { CalculadoraPTFC } from '../servicios/CalculadoraPTFC.js'
@@ -14,11 +15,14 @@ import { GestorLogros } from '../servicios/GestorLogros.js'
 import { GestorTiempoPTFC } from '../servicios/GestorTiempoPTFC.js'
 import { TransformadorCoordenadas } from '../servicios/TransformadorCoordenadas.js'
 
-export class EscenarioPTFC {
+export class EscenarioPTFC extends Escenario {
     constructor() {
+        // ✅ LLAMAR AL CONSTRUCTOR PADRE
+        super('Puente Mágico PTFC', 'Primer Teorema Fundamental del Cálculo con visualización del puente mágico')
+        
         // ✅ INSTANCIACIÓN DE ENTIDADES
-        this.estado = new EstadoPTFC()
-        this.configuracion = new ConfiguracionPTFC()
+        this.estadoPTFC = new EstadoPTFC()
+        this.configuracionPTFC = new ConfiguracionPTFC()
         
         // ✅ INSTANCIACIÓN DE SERVICIOS
         this.calculadora = new CalculadoraPTFC()
@@ -28,8 +32,8 @@ export class EscenarioPTFC {
         this.gestorVisualizacion = new GestorVisualizacionPTFC()
         
         // ✅ INSTANCIACIÓN DE RENDERIZADORES
-        this.renderizadorPuente = new RenderizadorPuenteMagico(this.configuracion)
-        this.renderizadorCartesiano = new RenderizadorCartesianoPTFC(this.configuracion)
+        this.renderizadorPuente = new RenderizadorPuenteMagico(this.configuracionPTFC)
+        this.renderizadorCartesiano = new RenderizadorCartesianoPTFC(this.configuracionPTFC)
         
         // ✅ TRANSFORMADOR DE COORDENADAS
         this.transformador = null
@@ -51,11 +55,26 @@ export class EscenarioPTFC {
         this.gestorTiempo.iniciarSesion()
     }
     
+    // ✅ IMPLEMENTAR MÉTODO REQUERIDO POR ESCENARIO BASE
+    inicializar() {
+        // Sincronizar con la clase base
+        this.estado = this.estadoPTFC
+        this.configuracion = this.configuracionPTFC
+        
+        // ✅ INICIALIZAR ESTADO CON CÁLCULOS POR DEFECTO
+        this.estadoPTFC.inicializarConCalculos()
+        
+        // Inicializar gestor de visualización
+        this.inicializarGestorVisualizacion()
+        
+        return this
+    }
+    
     // ✅ INICIALIZAR GESTOR DE VISUALIZACIÓN
     inicializarGestorVisualizacion() {
         this.gestorVisualizacion.inicializar(
-            this.estado,
-            this.configuracion,
+            this.estadoPTFC,
+            this.configuracionPTFC,
             this.calculadora,
             this.verificador,
             this.renderizadorPuente,
@@ -77,8 +96,8 @@ export class EscenarioPTFC {
         this.containerTooltip = containerTooltip
         
         // Crear transformador de coordenadas
-        const limites = this.estado.obtenerLimites()
-        const configuracion = this.configuracion.obtenerConfiguracionVisualizacion()
+        const limites = this.estadoPTFC.obtenerLimites()
+        const configuracion = this.configuracionPTFC.obtenerConfiguracionVisualizacion()
         
         const intervaloX = { min: limites.a, max: limites.b }
         const intervaloY = { min: 0, max: 10 } // Ajustar según la función
@@ -92,11 +111,21 @@ export class EscenarioPTFC {
         }
         
         this.transformador = new TransformadorCoordenadas(
-            this.configuracion,
+            this.configuracionPTFC,
             intervaloX,
             intervaloY,
             area
         )
+        
+        // ✅ ASEGURAR QUE EL GESTOR ESTÉ INICIALIZADO
+        if (!this.gestorVisualizacion.estado) {
+            this.inicializarGestorVisualizacion()
+        }
+        
+        // ✅ INICIALIZAR ESTADO CON CÁLCULOS SI NO ESTÁ INICIALIZADO
+        if (this.estadoPTFC.obtenerCalculos().valorFuncion === 0) {
+            this.estadoPTFC.inicializarConCalculos()
+        }
         
         // Configurar referencias en el gestor
         this.gestorVisualizacion.configurarReferencias(
@@ -105,6 +134,26 @@ export class EscenarioPTFC {
             this.transformador,
             containerTooltip
         )
+        
+        // ✅ RENDERIZAR GRÁFICAS INICIALES
+        console.log('🎨 Renderizando gráficas iniciales...')
+        console.log('📊 Estado PTFC:', this.estadoPTFC)
+        console.log('🎨 Configuración PTFC:', this.configuracionPTFC)
+        console.log('🌉 Canvas Puente:', canvasPuente)
+        console.log('📈 Canvas Cartesiano:', canvasCartesiano)
+        
+        // Renderizar inmediatamente y también con delay para asegurar
+        this.renderizar()
+        setTimeout(() => {
+            console.log('🎨 Renderizado con delay...')
+            this.renderizar()
+        }, 200)
+        
+        // ✅ FORZAR RENDERIZADO ADICIONAL
+        setTimeout(() => {
+            console.log('🎨 Renderizado final...')
+            this.renderizar()
+        }, 500)
     }
     
     // ✅ ACTUALIZAR FUNCIÓN
@@ -114,7 +163,7 @@ export class EscenarioPTFC {
             
             // Actualizar transformador si es necesario
             if (this.transformador) {
-                const limites = this.estado.obtenerLimites()
+                const limites = this.estadoPTFC.obtenerLimites()
                 const intervaloX = { min: limites.a, max: limites.b }
                 this.transformador.actualizarIntervaloX(intervaloX)
             }
@@ -165,7 +214,7 @@ export class EscenarioPTFC {
     manejarHover(evento, canvas, tipo = 'cartesiano') {
         try {
             if (tipo === 'cartesiano') {
-                this.renderizadorCartesiano.manejarHover(evento, canvas, this.transformador, this.estado.obtenerFuncionActual())
+                this.renderizadorCartesiano.manejarHover(evento, canvas, this.transformador, this.estadoPTFC.obtenerFuncionActual())
             } else {
                 this.gestorVisualizacion.manejarHover(evento, canvas, this.transformador)
             }
@@ -188,19 +237,27 @@ export class EscenarioPTFC {
     // ✅ RENDERIZAR
     async renderizar() {
         try {
+            console.log('🎨 EscenarioPTFC: Iniciando renderizado...')
             await this.gestorVisualizacion.renderizar()
+            console.log('✅ EscenarioPTFC: Renderizado completado')
         } catch (error) {
-            console.error('Error renderizando:', error)
+            console.error('❌ Error renderizando:', error)
             this.onError(error)
         }
+    }
+    
+    // ✅ FORZAR RENDERIZADO (MÉTODO PÚBLICO)
+    async forzarRenderizado() {
+        console.log('🔄 Forzando renderizado...')
+        await this.renderizar()
     }
     
     // ✅ RENDERIZAR CÁLCULOS
     renderizarCalculos(container) {
         try {
-            const calculos = this.estado.obtenerCalculos()
-            const logros = this.estado.obtenerLogrosDesbloqueados()
-            const tiempo = this.estado.obtenerTiempoSesion()
+            const calculos = this.estadoPTFC.obtenerCalculos()
+            const logros = this.estadoPTFC.obtenerLogrosDesbloqueados()
+            const tiempo = this.estadoPTFC.obtenerTiempoSesion()
             
             if (container) {
                 container.innerHTML = this.generarHTMLCalculos(calculos, logros, tiempo)
@@ -272,7 +329,7 @@ export class EscenarioPTFC {
     
     // ✅ OBTENER CÁLCULOS
     obtenerCalculos() {
-        return this.estado.obtenerCalculos()
+        return this.estadoPTFC.obtenerCalculos()
     }
     
     // ✅ OBTENER LOGROS
@@ -283,8 +340,8 @@ export class EscenarioPTFC {
     // ✅ OBTENER TIEMPO
     obtenerTiempo() {
         return {
-            sesion: this.estado.obtenerTiempoSesion(),
-            exploracion: this.estado.obtenerTiempoExploracion()
+            sesion: this.estadoPTFC.obtenerTiempoSesion(),
+            exploracion: this.estadoPTFC.obtenerTiempoExploracion()
         }
     }
     
@@ -301,7 +358,7 @@ export class EscenarioPTFC {
     // ✅ REINICIAR
     reiniciar() {
         try {
-            this.estado.reiniciar()
+            this.estadoPTFC.reiniciar()
             this.gestorVisualizacion.reiniciar()
         } catch (error) {
             console.error('Error reiniciando:', error)
@@ -343,9 +400,9 @@ export class EscenarioPTFC {
     // ✅ VERIFICAR LOGROS
     verificarLogros() {
         try {
-            const calculos = this.estado.obtenerCalculos()
-            const limites = this.estado.obtenerLimites()
-            const posicionX = this.estado.obtenerPosicionX()
+            const calculos = this.estadoPTFC.obtenerCalculos()
+            const limites = this.estadoPTFC.obtenerLimites()
+            const posicionX = this.estadoPTFC.obtenerPosicionX()
             const tiempo = this.gestorTiempo.obtenerTiempoSesion()
             
             const datos = {
@@ -364,7 +421,7 @@ export class EscenarioPTFC {
             
             if (logrosDesbloqueados.length > 0) {
                 logrosDesbloqueados.forEach(logro => {
-                    this.estado.agregarLogroDesbloqueado(logro)
+                    this.estadoPTFC.agregarLogroDesbloqueado(logro)
                     this.gestorTiempo.registrarLogro(logro)
                     this.onLogroDesbloqueado(logro)
                 })

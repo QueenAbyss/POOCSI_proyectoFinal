@@ -66,4 +66,12 @@ export class ConfiguracionComparacion {
             alto: this.grafico.alto - margen.superior - margen.inferior
         }
     }
+    
+    obtenerColores() {
+        return this.colores
+    }
+    
+    obtenerGrafico() {
+        return this.grafico
+    }
 }

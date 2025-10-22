@@ -3,16 +3,18 @@
  * RESPONSABILIDAD ÚNICA: Solo sincronización entre React y OOP
  */
 import { useRef, useCallback, useState } from 'react'
-import { EscenarioInversionLimites } from '../escenarios/EscenarioInversionLimites.js'
+import { EscenarioFactory } from '../escenarios/EscenarioFactory.js'
 
 export const useInversionLimitesState = () => {
-    const escenarioRef = useRef<EscenarioInversionLimites | null>(null)
+    const escenarioFactory = useRef<EscenarioFactory | null>(null)
+    const escenarioRef = useRef<any>(null)
     const [isInitialized, setIsInitialized] = useState(false)
     
     // Inicializar escenario
     const inicializarEscenario = useCallback(() => {
-        if (!escenarioRef.current) {
-            escenarioRef.current = new EscenarioInversionLimites()
+        if (!escenarioFactory.current) {
+            escenarioFactory.current = new EscenarioFactory()
+            escenarioRef.current = escenarioFactory.current.crearEscenario('inversion-limites')
             setIsInitialized(true)
         }
     }, [])

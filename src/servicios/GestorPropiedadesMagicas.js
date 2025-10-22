@@ -3,14 +3,14 @@
  * RESPONSABILIDAD: Gestionar el acceso a las propiedades mágicas
  * SRP: Solo maneja la navegación entre propiedades, no lógica de negocio
  */
-import { EscenarioPropiedadesLinealidad } from "../escenarios/EscenarioPropiedadesLinealidad.js"
-import { EscenarioPropiedadesAditividad } from "../escenarios/EscenarioPropiedadesAditividad.js"
+import { EscenarioFactory } from "../escenarios/EscenarioFactory.js"
 
 export class GestorPropiedadesMagicas {
   constructor() {
     this.propiedades = this.inicializarPropiedades()
     this.propiedadActiva = null
     this.escenarioActivo = null
+    this.escenarioFactory = new EscenarioFactory()
   }
 
   inicializarPropiedades() {
@@ -88,17 +88,17 @@ export class GestorPropiedadesMagicas {
     return this.escenarioActivo
   }
 
-  // Crear escenario de propiedad
+  // Crear escenario de propiedad usando Factory
   crearEscenarioPropiedad(id) {
     switch (id) {
       case "linealidad":
-        return new EscenarioPropiedadesLinealidad()
+        return this.escenarioFactory.crearEscenario('propiedades-linealidad')
       case "aditividad":
-        return new EscenarioPropiedadesAditividad()
+        return this.escenarioFactory.crearEscenario('propiedades-aditividad')
       case "inversion-limites":
-        throw new Error("Escenario de inversión de límites no implementado aún")
+        return this.escenarioFactory.crearEscenario('inversion-limites')
       case "comparacion":
-        throw new Error("Escenario de comparación no implementado aún")
+        return this.escenarioFactory.crearEscenario('comparacion')
       default:
         throw new Error(`Escenario de propiedad ${id} no encontrado`)
     }

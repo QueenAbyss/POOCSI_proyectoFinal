@@ -54,11 +54,20 @@ export function PTFCDemo({ onBack }: PTFCDemoProps) {
   // ✅ INICIALIZAR CANVAS
   useEffect(() => {
     if (canvasPuenteRef.current && canvasCartesianoRef.current) {
+      console.log('🎨 Configurando canvas PTFC...')
+      console.log('🌉 Canvas Puente:', canvasPuenteRef.current)
+      console.log('📈 Canvas Cartesiano:', canvasCartesianoRef.current)
+      console.log('🔧 Container Tooltip:', containerTooltipRef.current)
+      
       configurarCanvas(
         canvasPuenteRef.current,
         canvasCartesianoRef.current,
-        containerTooltipRef.current || undefined
+        containerTooltipRef.current ?? undefined
       )
+      
+      console.log('✅ Canvas PTFC configurado')
+    } else {
+      console.warn('⚠️ Canvas PTFC no disponible aún')
     }
   }, [configurarCanvas])
   

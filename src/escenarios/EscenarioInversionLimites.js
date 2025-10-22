@@ -2,25 +2,34 @@
  * EscenarioInversionLimites - Escenario que maneja la visualización de inversión de límites
  * RESPONSABILIDAD ÚNICA: Solo coordinación del escenario de inversión de límites
  */
+import { Escenario } from './Escenario.js'
 import { EstadoInversionLimites } from '../entidades/EstadoInversionLimites.js'
 import { ConfiguracionInversionLimites } from '../entidades/ConfiguracionInversionLimites.js'
 import { GestorVisualizacionInversionLimites } from '../servicios/GestorVisualizacionInversionLimites.js'
 import { TransformadorCoordenadas } from '../servicios/TransformadorCoordenadas.js'
 
-export class EscenarioInversionLimites {
+export class EscenarioInversionLimites extends Escenario {
     constructor() {
-        this.nombre = "Propiedades Mágicas - Inversión de Límites"
-        this.descripcion = "Visualización interactiva de la propiedad de inversión de límites de las integrales"
+        // ✅ LLAMAR AL CONSTRUCTOR PADRE
+        super('Inversión de Límites', 'Propiedad de inversión de límites de las integrales')
         
         // Inicializar componentes
-        this.estado = new EstadoInversionLimites()
-        this.configuracion = new ConfiguracionInversionLimites()
-        this.gestorVisualizacion = new GestorVisualizacionInversionLimites(this.estado, this.configuracion)
+        this.estadoInversionLimites = new EstadoInversionLimites()
+        this.configuracionInversionLimites = new ConfiguracionInversionLimites()
+        this.gestorVisualizacion = new GestorVisualizacionInversionLimites(this.estadoInversionLimites, this.configuracionInversionLimites)
         
         // Referencias
         this.transformador = null
         this.canvas = null
         this.containerCalculos = null
+    }
+    
+    // ✅ IMPLEMENTAR MÉTODO REQUERIDO POR ESCENARIO BASE
+    inicializar() {
+        // Ya inicializado en el constructor
+        this.estado = this.estadoInversionLimites
+        this.configuracion = this.configuracionInversionLimites
+        return this
     }
     
     // Configurar canvas
@@ -33,7 +42,7 @@ export class EscenarioInversionLimites {
         this.containerCalculos = containerCalculos
         
         // Crear transformador de coordenadas
-        const limites = this.estado.obtenerLimites()
+        const limites = this.estadoInversionLimites.obtenerLimites()
         const intervaloX = { 
             min: Math.min(limites.a, limites.b) - 1, 
             max: Math.max(limites.a, limites.b) + 1
@@ -41,7 +50,7 @@ export class EscenarioInversionLimites {
         const intervaloY = { min: -2, max: 5 }
         
         this.transformador = new TransformadorCoordenadas(
-            this.configuracion,
+            this.configuracionInversionLimites,
             intervaloX,
             intervaloY
         )
@@ -111,7 +120,7 @@ export class EscenarioInversionLimites {
     
     // Reiniciar
     reiniciar() {
-        this.estado.reiniciar()
+        this.estadoInversionLimites.reiniciar()
         this.gestorVisualizacion.reiniciar()
     }
     

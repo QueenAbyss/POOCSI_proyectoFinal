@@ -75,6 +75,26 @@ export class TransformadorCoordenadas {
     this.escalas = this.calcularEscalas(this.intervaloX, this.intervaloY)
   }
 
+  // ✅ OBTENER INTERVALOS
+  obtenerIntervaloX() {
+    return this.intervaloX
+  }
+  
+  obtenerIntervaloY() {
+    return this.intervaloY
+  }
+  
+  // ✅ MÉTODOS DE CONVERSIÓN DE COORDENADAS
+  xACoordenada(x) {
+    const coordenadas = this.matematicasACanvas(x, 0)
+    return coordenadas.x
+  }
+  
+  yACoordenada(y) {
+    const coordenadas = this.matematicasACanvas(0, y)
+    return coordenadas.y
+  }
+  
   // Calcular escalas basado en intervalos y área de dibujo
   calcularEscalas(intervaloX, intervaloY) {
     // Compatibilidad con diferentes formatos de intervalo

@@ -7,7 +7,7 @@ export class EstadoPTFC {
     constructor() {
         // ✅ DATOS DE FUNCIÓN
         this.funcionSeleccionada = 'cuadratica'
-        this.funcionActual = null
+        this.funcionActual = this.crearFuncionPorDefecto()
         this.dominio = { inicio: -2, fin: 6 }
         
         // ✅ DATOS DE LÍMITES
@@ -41,6 +41,17 @@ export class EstadoPTFC {
             esValida: true,
             errores: [],
             advertencias: []
+        }
+    }
+    
+    // ✅ CREAR FUNCIÓN POR DEFECTO
+    crearFuncionPorDefecto() {
+        return {
+            nombre: 'cuadratica',
+            expresion: '0.5x² - 2x + 3',
+            evaluar: (x) => 0.5 * x * x - 2 * x + 3,
+            derivada: (x) => x - 2,
+            antiderivada: (x) => (0.5 * x * x * x / 3) - (2 * x * x / 2) + (3 * x)
         }
     }
     
@@ -191,5 +202,17 @@ export class EstadoPTFC {
             verificacionTeorema: false,
             diferenciaVerificacion: 0
         })
+    }
+    
+    // ✅ INICIALIZAR CON CÁLCULOS POR DEFECTO
+    inicializarConCalculos() {
+        if (this.funcionActual) {
+            const y = this.funcionActual.evaluar(this.posicionX)
+            this.valorFuncion = y
+            this.integralAcumulada = 0 // Se calculará después
+            this.derivadaIntegral = 0 // Se calculará después
+            this.verificacionTeorema = false
+            this.diferenciaVerificacion = 0
+        }
     }
 }

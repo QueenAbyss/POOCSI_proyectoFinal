@@ -4,7 +4,7 @@
  * SRP: Solo sincronización, no lógica de negocio ni presentación
  */
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { EscenarioPTFC } from '../escenarios/EscenarioPTFC.js'
+import { EscenarioFactory } from '../escenarios/EscenarioFactory.js'
 
 export interface PTFCState {
   estado: any
@@ -24,11 +24,14 @@ export interface PTFCState {
   reiniciar: () => void
   limpiar: () => void
   sincronizarConReact: () => void
+  configurarCanvas: (canvasPuente: HTMLCanvasElement, canvasCartesiano: HTMLCanvasElement, containerTooltip?: HTMLElement | null) => void
+  obtenerEscenario: () => any
 }
 
 export const usePTFCState = (): PTFCState => {
   // ✅ REFERENCIAS A CLASES OOP
-  const escenarioRef = useRef<EscenarioPTFC | null>(null)
+  const escenarioFactoryRef = useRef<EscenarioFactory | null>(null)
+  const escenarioRef = useRef<any>(null)
   
   // ✅ ESTADO LOCAL PARA SINCRONIZACIÓN
   const [estado, setEstado] = useState<any>(null)
@@ -40,8 +43,14 @@ export const usePTFCState = (): PTFCState => {
   
   // ✅ INICIALIZAR ESCENARIO
   const inicializarEscenario = useCallback(() => {
-    if (!escenarioRef.current) {
-      escenarioRef.current = new EscenarioPTFC()
+    if (!escenarioFactoryRef.current) {
+      escenarioFactoryRef.current = new EscenarioFactory()
+      escenarioRef.current = escenarioFactoryRef.current.crearEscenario('puente-teorema')
+      
+      // ✅ DEBUG: VERIFICAR INICIALIZACIÓN
+      console.log('🎯 Escenario PTFC inicializado:', escenarioRef.current)
+      console.log('📊 Estado inicial:', escenarioRef.current?.obtenerEstado())
+      console.log('🎨 Configuración inicial:', escenarioRef.current?.obtenerConfiguracion())
       
       // Configurar callbacks
       escenarioRef.current.configurarCallbacks({
@@ -148,9 +157,16 @@ export const usePTFCState = (): PTFCState => {
   }, [])
   
   // ✅ CONFIGURAR CANVAS
-  const configurarCanvas = useCallback((canvasPuente: HTMLCanvasElement, canvasCartesiano: HTMLCanvasElement, containerTooltip?: HTMLElement) => {
+  const configurarCanvas = useCallback((canvasPuente: HTMLCanvasElement, canvasCartesiano: HTMLCanvasElement, containerTooltip?: HTMLElement | null) => {
     if (escenarioRef.current) {
-      escenarioRef.current.configurarCanvas(canvasPuente, canvasCartesiano, containerTooltip)
+      escenarioRef.current.configurarCanvas(canvasPuente, canvasCartesiano, containerTooltip as any)
+      
+      // ✅ FORZAR RENDERIZADO DESPUÉS DE CONFIGURAR CANVAS
+      setTimeout(() => {
+        if (escenarioRef.current) {
+          escenarioRef.current.forzarRenderizado()
+        }
+      }, 300)
     }
   }, [])
   

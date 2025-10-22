@@ -87,7 +87,8 @@ export class GestorVisualizacionPTFC {
         if (!this.estado) return
         
         this.estado.establecerPosicionX(x)
-        this.recalcularYRenderizar()
+        // ✅ RENDERIZADO INMEDIATO PARA POSICIÓN X
+        this.renderizarInmediato()
     }
     
     // ✅ ACTUALIZAR ANIMACIÓN
@@ -164,31 +165,62 @@ export class GestorVisualizacionPTFC {
         this.estado.actualizarTiempoExploracion()
     }
     
+    // ✅ RENDERIZADO INMEDIATO (SIN DEBOUNCING)
+    async renderizarInmediato() {
+        if (this.isRendering) return
+        
+        this.isRendering = true
+        try {
+            await this.renderizar()
+        } catch (error) {
+            console.error('Error en renderizado inmediato:', error)
+        } finally {
+            this.isRendering = false
+        }
+    }
+    
     // ✅ RENDERIZAR
     async renderizar() {
-        if (!this.renderizadorPuente || !this.renderizadorCartesiano) return
+        console.log('🎨 GestorVisualizacionPTFC: Iniciando renderizado...')
+        if (!this.renderizadorPuente || !this.renderizadorCartesiano) {
+            console.warn('⚠️ Renderizadores no disponibles')
+            return
+        }
+        
+        // ✅ EJECUTAR CÁLCULOS ANTES DE RENDERIZAR
+        await this.ejecutarCalculos()
         
         const estado = this.estado.obtenerCalculos()
         const configuracion = this.configuracion.obtenerColores()
+        console.log('📊 Estado:', estado)
+        console.log('🎨 Configuración:', configuracion)
         
         // Renderizar puente mágico
         if (this.canvasPuente) {
+            console.log('🌉 Renderizando puente mágico...')
             await this.renderizadorPuente.renderizar(
                 this.canvasPuente,
                 this.estado,
                 this.transformador,
                 configuracion
             )
+            console.log('✅ Puente mágico renderizado')
+        } else {
+            console.warn('⚠️ Canvas puente no disponible')
         }
         
         // Renderizar gráfica cartesiana
         if (this.canvasCartesiano) {
+            console.log('📈 Renderizando gráfica cartesiana...')
             await this.renderizadorCartesiano.renderizar(
                 this.canvasCartesiano,
                 this.estado,
                 this.transformador,
                 configuracion
             )
+            console.log('✅ Gráfica cartesiana renderizada')
+        } else {
+            console.warn('⚠️ Canvas cartesiano no disponible')
         }
     }
     
@@ -210,7 +242,8 @@ export class GestorVisualizacionPTFC {
                 this.detenerAnimacion()
             } else {
                 this.estado.establecerPosicionX(nuevaPosicion)
-                this.recalcularYRenderizar()
+                // ✅ RENDERIZADO INMEDIATO PARA ANIMACIÓN
+                this.renderizarInmediato()
                 requestAnimationFrame(animar)
             }
         }

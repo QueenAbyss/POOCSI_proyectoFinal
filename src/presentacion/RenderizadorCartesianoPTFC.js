@@ -120,6 +120,90 @@ export class RenderizadorCartesianoPTFC {
         ctx.moveTo(margen, margen)
         ctx.lineTo(margen, canvas.height - margen)
         ctx.stroke()
+        
+        // ✅ DIBUJAR COORDENADAS E INTERVALOS
+        this.dibujarCoordenadas(ctx, canvas, transformador, colores)
+    }
+    
+    // ✅ DIBUJAR COORDENADAS E INTERVALOS
+    dibujarCoordenadas(ctx, canvas, transformador, colores) {
+        const config = this.configuracion.visualizacion.cartesiana
+        const margen = config.margen
+        
+        // Obtener límites del transformador
+        const limitesX = transformador.obtenerIntervaloX()
+        const limitesY = transformador.obtenerIntervaloY()
+        
+        ctx.fillStyle = colores.ejes
+        ctx.font = '12px Arial'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        
+        // ✅ INTERVALOS EN EJE X
+        const numIntervalosX = 8
+        const pasoX = (limitesX.max - limitesX.min) / numIntervalosX
+        
+        for (let i = 0; i <= numIntervalosX; i++) {
+            const valorX = limitesX.min + (i * pasoX)
+            const posX = transformador.xACoordenada(valorX)
+            
+            // Dibujar línea vertical
+            if (i > 0 && i < numIntervalosX) {
+                ctx.strokeStyle = colores.grid
+                ctx.lineWidth = 1
+                ctx.setLineDash([2, 2])
+                ctx.beginPath()
+                ctx.moveTo(posX, margen)
+                ctx.lineTo(posX, canvas.height - margen)
+                ctx.stroke()
+                ctx.setLineDash([])
+            }
+            
+            // Dibujar etiqueta
+            if (posX >= margen && posX <= canvas.width - margen) {
+                ctx.fillText(valorX.toFixed(1), posX, canvas.height - margen + 5)
+            }
+        }
+        
+        // ✅ INTERVALOS EN EJE Y
+        const numIntervalosY = 6
+        const pasoY = (limitesY.max - limitesY.min) / numIntervalosY
+        
+        for (let i = 0; i <= numIntervalosY; i++) {
+            const valorY = limitesY.min + (i * pasoY)
+            const posY = transformador.yACoordenada(valorY)
+            
+            // Dibujar línea horizontal
+            if (i > 0 && i < numIntervalosY) {
+                ctx.strokeStyle = colores.grid
+                ctx.lineWidth = 1
+                ctx.setLineDash([2, 2])
+                ctx.beginPath()
+                ctx.moveTo(margen, posY)
+                ctx.lineTo(canvas.width - margen, posY)
+                ctx.stroke()
+                ctx.setLineDash([])
+            }
+            
+            // Dibujar etiqueta
+            if (posY >= margen && posY <= canvas.height - margen) {
+                ctx.textAlign = 'right'
+                ctx.fillText(valorY.toFixed(1), margen - 5, posY - 6)
+                ctx.textAlign = 'center'
+            }
+        }
+        
+        // ✅ ETIQUETAS DE EJES
+        ctx.fillStyle = colores.ejes
+        ctx.font = '14px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('x', canvas.width / 2, canvas.height - 5)
+        ctx.textAlign = 'center'
+        ctx.save()
+        ctx.translate(15, canvas.height / 2)
+        ctx.rotate(-Math.PI / 2)
+        ctx.fillText('y', 0, 0)
+        ctx.restore()
     }
     
     // ✅ DIBUJAR ÁREA BAJO LA CURVA

@@ -2,19 +2,31 @@
  * EscenarioPropiedadesAditividad - Escenario que maneja la visualización de aditividad
  * RESPONSABILIDAD ÚNICA: Solo coordinación del escenario de aditividad
  */
+import { Escenario } from './Escenario.js'
 import { EstadoAditividad } from '../entidades/EstadoAditividad.js'
 import { ConfiguracionAditividad } from '../entidades/ConfiguracionAditividad.js'
 import { GestorVisualizacionAditividad } from '../servicios/GestorVisualizacionAditividad.js'
 import { TransformadorCoordenadas } from '../servicios/TransformadorCoordenadas.js'
 
-export class EscenarioPropiedadesAditividad {
+export class EscenarioPropiedadesAditividad extends Escenario {
     constructor() {
-        this.estado = new EstadoAditividad()
-        this.configuracion = new ConfiguracionAditividad()
-        this.gestorVisualizacion = new GestorVisualizacionAditividad(this.estado, this.configuracion)
+        // ✅ LLAMAR AL CONSTRUCTOR PADRE
+        super('Propiedades Aditividad', 'Propiedad de aditividad de las integrales')
+        
+        this.estadoAditividad = new EstadoAditividad()
+        this.configuracionAditividad = new ConfiguracionAditividad()
+        this.gestorVisualizacion = new GestorVisualizacionAditividad(this.estadoAditividad, this.configuracionAditividad)
         this.transformador = null
         this.canvas = null
         this.containerTooltip = null
+    }
+    
+    // ✅ IMPLEMENTAR MÉTODO REQUERIDO POR ESCENARIO BASE
+    inicializar() {
+        // Ya inicializado en el constructor
+        this.estado = this.estadoAditividad
+        this.configuracion = this.configuracionAditividad
+        return this
     }
     
     // Configurar canvas
@@ -23,7 +35,7 @@ export class EscenarioPropiedadesAditividad {
         this.containerTooltip = containerTooltip
         
         // ✅ CREAR TRANSFORMADOR CON INTERVALOS CORRECTOS
-        const limites = this.estado.obtenerLimites()
+        const limites = this.estadoAditividad.obtenerLimites()
         const intervaloX = { min: limites.a, max: limites.c }
         const intervaloY = { min: -1, max: 10 }
         
@@ -33,7 +45,7 @@ export class EscenarioPropiedadesAditividad {
         console.log('Intervalo Y:', intervaloY)
         
         this.transformador = new TransformadorCoordenadas(
-            this.configuracion,
+            this.configuracionAditividad,
             intervaloX,
             intervaloY
         )
@@ -65,7 +77,7 @@ export class EscenarioPropiedadesAditividad {
         
         // Evento de salida del mouse
         this.canvas.addEventListener('mouseleave', () => {
-            this.estado.establecerPuntoHover(null)
+            this.estadoAditividad.establecerPuntoHover(null)
             this.renderizar()
         })
     }
@@ -109,20 +121,20 @@ export class EscenarioPropiedadesAditividad {
     
     // Limpiar hover (para React)
     limpiarHover() {
-        this.estado.establecerPuntoHover(null)
+        this.estadoAditividad.establecerPuntoHover(null)
         // ✅ NO RENDERIZAR INMEDIATAMENTE - Solo limpiar el estado del hover
         // El renderizado se manejará automáticamente por el GestorVisualizacionAditividad
     }
     
     // Establecer estado (para React)
     setEstado(estado) {
-        this.estado = estado
+        this.estadoAditividad = estado
         this.gestorVisualizacion.estado = estado
     }
     
     // Establecer configuración (para React)
     setConfiguracion(configuracion) {
-        this.configuracion = configuracion
+        this.configuracionAditividad = configuracion
         this.gestorVisualizacion.configuracion = configuracion
     }
     

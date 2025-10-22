@@ -4,6 +4,11 @@
  * SRP: Solo maneja la creación y selección de escenarios, no la lógica de negocio
  */
 import { EscenarioJardinRiemann } from "./EscenarioJardinRiemann.js"
+import { EscenarioPTFC } from "./EscenarioPTFC.js"
+import { EscenarioPropiedadesLinealidad } from "./EscenarioPropiedadesLinealidad.js"
+import { EscenarioPropiedadesAditividad } from "./EscenarioPropiedadesAditividad.js"
+import { EscenarioComparacion } from "./EscenarioComparacion.js"
+import { EscenarioInversionLimites } from "./EscenarioInversionLimites.js"
 
 export class EscenarioFactory {
   constructor() {
@@ -15,9 +20,13 @@ export class EscenarioFactory {
   registrarEscenarios() {
     // Registrar todos los escenarios disponibles
     this.escenarios.set('jardin-riemann', () => new EscenarioJardinRiemann())
+    this.escenarios.set('puente-teorema', () => new EscenarioPTFC())
+    this.escenarios.set('propiedades-linealidad', () => new EscenarioPropiedadesLinealidad())
+    this.escenarios.set('propiedades-aditividad', () => new EscenarioPropiedadesAditividad())
+    this.escenarios.set('comparacion', () => new EscenarioComparacion())
+    this.escenarios.set('inversion-limites', () => new EscenarioInversionLimites())
     // Aquí se pueden agregar más escenarios en el futuro
     // this.escenarios.set('cristal-antiderivadas', () => new EscenarioCristalAntiderivadas())
-    // this.escenarios.set('puente-teorema', () => new EscenarioPuenteTeorema())
     // this.escenarios.set('torre-valor-medio', () => new EscenarioTorreValorMedio())
   }
 

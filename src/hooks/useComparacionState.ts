@@ -1,21 +1,24 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { EscenarioComparacion } from '../escenarios/EscenarioComparacion'
+import { EscenarioFactory } from '../escenarios/EscenarioFactory'
 
 export function useComparacionState() {
-    const escenarioComparacion = useRef<EscenarioComparacion | null>(null)
+    const escenarioFactory = useRef<EscenarioFactory | null>(null)
+    const escenarioComparacion = useRef<any>(null)
     const [estado, setEstado] = useState<any>(null)
 
     // Inicializar escenario automáticamente
     useEffect(() => {
-        if (!escenarioComparacion.current) {
-            escenarioComparacion.current = new EscenarioComparacion()
+        if (!escenarioFactory.current) {
+            escenarioFactory.current = new EscenarioFactory()
+            escenarioComparacion.current = escenarioFactory.current.crearEscenario('comparacion')
             setEstado(escenarioComparacion.current.estado)
         }
     }, [])
 
     const inicializarEscenario = useCallback(() => {
-        if (!escenarioComparacion.current) {
-            escenarioComparacion.current = new EscenarioComparacion()
+        if (!escenarioFactory.current) {
+            escenarioFactory.current = new EscenarioFactory()
+            escenarioComparacion.current = escenarioFactory.current.crearEscenario('comparacion')
             setEstado(escenarioComparacion.current.estado)
         }
         return escenarioComparacion.current

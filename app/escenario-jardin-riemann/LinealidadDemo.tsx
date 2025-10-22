@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft } from "lucide-react"
 
 // Importar las clases OOP
-import { EscenarioPropiedadesLinealidad } from "@/src/escenarios/EscenarioPropiedadesLinealidad"
+import { EscenarioFactory } from "@/src/escenarios/EscenarioFactory"
 import { EstadoLinealidad } from "@/src/entidades/EstadoLinealidad"
 import { ConfiguracionLinealidad } from "@/src/entidades/ConfiguracionLinealidad"
 import { CalculadoraLinealidad } from "@/src/servicios/CalculadoraLinealidad"
@@ -30,7 +30,8 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
   const containerTooltipRef = useRef<HTMLDivElement>(null)
   
   // Referencias a las clases OOP
-  const escenarioLinealidad = useRef<EscenarioPropiedadesLinealidad | null>(null)
+  const escenarioFactory = useRef<EscenarioFactory | null>(null)
+  const escenarioLinealidad = useRef<any>(null)
   const estado = useRef<EstadoLinealidad | null>(null)
   const configuracion = useRef<ConfiguracionLinealidad | null>(null)
   const calculadora = useRef<CalculadoraLinealidad | null>(null)
@@ -59,8 +60,9 @@ export default function LinealidadDemo({ onBack }: LinealidadDemoProps) {
       verificador.current = new VerificadorLinealidad()
       gestorVisualizacion.current = new GestorVisualizacionLinealidad()
       
-      // Crear escenario
-      escenarioLinealidad.current = new EscenarioPropiedadesLinealidad()
+      // Crear escenario usando Factory
+      escenarioFactory.current = new EscenarioFactory()
+      escenarioLinealidad.current = escenarioFactory.current.crearEscenario('propiedades-linealidad')
       
       // Configurar canvas
       if (canvasRef.current && containerCalculosRef.current) {
