@@ -237,29 +237,32 @@ export class RenderizadorGraficoLinealidad {
 
   // Renderizar leyenda
   renderizarLeyenda(estado) {
-    const { ancho, margen } = this.configuracion.grafico
+    const { ancho, alto, margen } = this.configuracion.grafico
     const colores = this.configuracion.colores
-    const y = margen.superior + 20
+    
+    // Posicionar leyenda en la parte inferior
+    const y = alto - margen.inferior + 20
+    const x = margen.izquierdo + 20
     
     this.ctx.font = "14px Arial"
     
     // f(x)
     this.ctx.fillStyle = colores.fFuncion
-    this.ctx.fillRect(ancho - 200, y, 15, 15)
+    this.ctx.fillRect(x, y, 15, 15)
     this.ctx.fillStyle = "#000"
-    this.ctx.fillText(`f(x) = ${estado.fFuncion}`, ancho - 180, y + 12)
+    this.ctx.fillText(`f(x) = ${estado.fFuncion}`, x + 20, y + 12)
     
     // g(x)
     this.ctx.fillStyle = colores.gFuncion
-    this.ctx.fillRect(ancho - 200, y + 25, 15, 15)
+    this.ctx.fillRect(x, y + 25, 15, 15)
     this.ctx.fillStyle = "#000"
-    this.ctx.fillText(`g(x) = ${estado.gFuncion}`, ancho - 180, y + 37)
+    this.ctx.fillText(`g(x) = ${estado.gFuncion}`, x + 20, y + 37)
     
     // Combinada
     this.ctx.fillStyle = colores.combinada
-    this.ctx.fillRect(ancho - 200, y + 50, 15, 15)
+    this.ctx.fillRect(x, y + 50, 15, 15)
     this.ctx.fillStyle = "#000"
-    this.ctx.fillText(`αf(x) + βg(x)`, ancho - 180, y + 62)
+    this.ctx.fillText(`αf(x) + βg(x)`, x + 20, y + 62)
   }
 
   // Renderizar límites
