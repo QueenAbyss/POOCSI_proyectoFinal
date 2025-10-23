@@ -9,6 +9,7 @@ import { EscenarioPropiedadesLinealidad } from "./EscenarioPropiedadesLinealidad
 import { EscenarioPropiedadesAditividad } from "./EscenarioPropiedadesAditividad.js"
 import { EscenarioComparacion } from "./EscenarioComparacion.js"
 import { EscenarioInversionLimites } from "./EscenarioInversionLimites.js"
+import { EscenarioTorreValorMedio } from "./EscenarioTorreValorMedio.js"
 
 export class EscenarioFactory {
   constructor() {
@@ -25,9 +26,9 @@ export class EscenarioFactory {
     this.escenarios.set('propiedades-aditividad', () => new EscenarioPropiedadesAditividad())
     this.escenarios.set('comparacion', () => new EscenarioComparacion())
     this.escenarios.set('inversion-limites', () => new EscenarioInversionLimites())
+    this.escenarios.set('torre-valor-medio', () => new EscenarioTorreValorMedio())
     // Aquí se pueden agregar más escenarios en el futuro
     // this.escenarios.set('cristal-antiderivadas', () => new EscenarioCristalAntiderivadas())
-    // this.escenarios.set('torre-valor-medio', () => new EscenarioTorreValorMedio())
   }
 
   crearEscenario(tipo) {

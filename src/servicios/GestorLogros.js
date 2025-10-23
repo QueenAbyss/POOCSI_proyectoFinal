@@ -105,6 +105,43 @@ export class GestorLogros {
         "⏱️",
         (datos) => datos.tiempoExploracion > 120000, // 2 minutos en ms
       ),
+      
+      // ✅ LOGROS DE TORRE DEL VALOR MEDIO
+      new Logro(
+        "primera-estimacion-tvm",
+        "🎯 Primera Estimación",
+        "Haz tu primera estimación de c",
+        "🎯",
+        (datos) => datos.estimacionUsuario !== null,
+      ),
+      new Logro(
+        "ojo-aguila-tvm",
+        "🦅 Ojo de Águila",
+        "Estima c con error < 0.2",
+        "🦅",
+        (datos) => datos.errorEstimacion < 0.2,
+      ),
+      new Logro(
+        "perfeccionista-tvm",
+        "🏆 Perfeccionista",
+        "Consigue 3 estimaciones excelentes",
+        "🏆",
+        (datos) => datos.estimacionesExcelentes >= 3,
+      ),
+      new Logro(
+        "explorador-tvm",
+        "🔍 Explorador",
+        "Prueba los 5 ejemplos",
+        "🔍",
+        (datos) => datos.ejemplosCompletados >= 5,
+      ),
+      new Logro(
+        "velocista-tvm",
+        "⚡ Velocista",
+        "Completa un ejemplo en < 30s",
+        "⚡",
+        (datos) => datos.tiempoCompletado < 30000, // 30 segundos
+      ),
     ]
   }
 

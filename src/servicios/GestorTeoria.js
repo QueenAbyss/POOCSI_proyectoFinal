@@ -8,6 +8,7 @@ import { TeoriaAditividad } from "../entidades/TeoriaAditividad.js"
 import { TeoriaComparacion } from "../entidades/TeoriaComparacion.js"
 import { TeoriaInversionLimites } from "../entidades/TeoriaInversionLimites.js"
 import { TeoriaLinealidad } from "../entidades/TeoriaLinealidad.js"
+import { TeoriaTorreValorMedio } from "../entidades/TeoriaTorreValorMedio.js"
 
 export class GestorTeoria {
   constructor() {
@@ -20,7 +21,8 @@ export class GestorTeoria {
       aditividad: new TeoriaAditividad(),
       comparacion: new TeoriaComparacion(),
       inversionLimites: new TeoriaInversionLimites(),
-      linealidad: new TeoriaLinealidad()
+      linealidad: new TeoriaLinealidad(),
+      torreValorMedio: new TeoriaTorreValorMedio()
     }
   }
 
@@ -35,7 +37,8 @@ export class GestorTeoria {
   obtenerTeoriasPorCategoria(categoria) {
     const categorias = {
       "propiedades": ["aditividad", "comparacion", "inversionLimites", "linealidad"],
-      "fundamentos": ["riemann"]
+      "fundamentos": ["riemann"],
+      "teoremas": ["torreValorMedio"]
     }
     
     const tipos = categorias[categoria] || []
@@ -45,7 +48,7 @@ export class GestorTeoria {
   generarResumenTeorico() {
     return {
       totalTeorias: Object.keys(this.teorias).length,
-      categorias: ["propiedades", "fundamentos"],
+      categorias: ["propiedades", "fundamentos", "teoremas"],
       temas: Object.values(this.teorias).map(teoria => teoria.titulo)
     }
   }
